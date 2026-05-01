@@ -59,7 +59,8 @@ def main(dry_run: bool = False) -> None:
     news_articles += fetch_rss_articles(sources.get("rss_feeds", []))
 
     # Social media fetched separately — not mixed into the news scoring pipeline
-    raw_social, social_auth_failures = fetch_social_articles(sources.get("social", {}))
+    social_config = sources.get("social", {})
+    raw_social, social_auth_failures, social_fetch_failures = fetch_social_articles(social_config)
 
     # Handle web_sources: items tagged type=rss are passed through the RSS fetcher
     web_as_rss = [
@@ -156,6 +157,8 @@ def main(dry_run: bool = False) -> None:
         iterations_used=iterations_used,
         scoring_ok=scoring_ok,
         social_auth_failures=social_auth_failures if social_auth_failures else None,
+        social_fetch_failures=social_fetch_failures if social_fetch_failures else None,
+        social_account_count=len(social_config.get("twitter_accounts") or []),
         social_summary=social_summary if social_summary else None,
     )
 

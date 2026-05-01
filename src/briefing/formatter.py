@@ -27,6 +27,8 @@ def format_briefing(
     iterations_used: int = 1,
     scoring_ok: bool = True,
     social_auth_failures: list[str] | None = None,
+    social_fetch_failures: list[str] | None = None,
+    social_account_count: int = 0,
     social_summary: str | None = None,
 ) -> str:
     if generated_at is None:
@@ -60,6 +62,19 @@ def format_briefing(
         lines += [
             f"> ⚠️ **Social media feeds failed to load** ({handles_str}) — "
             "the RSSHub access token needs to be renewed.",
+            "",
+        ]
+    if social_fetch_failures:
+        handles_str = ", ".join(social_fetch_failures)
+        lines += [
+            f"> ⚠️ **Some social feeds could not be fetched** ({handles_str}). "
+            "This is not the same as 'no recent posts' — check the workflow logs or RSSHub instance.",
+            "",
+        ]
+    if social_account_count and not social_summary and not social_auth_failures and not social_fetch_failures:
+        lookback_hours = int(os.environ.get("LOOKBACK_HOURS", "25"))
+        lines += [
+            f"> ℹ️ **No recent social posts found** — none of the {social_account_count} followed accounts had posts in the last {lookback_hours} hours.",
             "",
         ]
 

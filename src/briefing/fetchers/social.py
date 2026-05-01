@@ -37,8 +37,8 @@ def _parse_date(entry) -> datetime:
     return datetime.now(timezone.utc)
 
 
-def fetch_social_articles(social_config: dict) -> tuple[list[Article], list[str]]:
-    """Return (articles, auth_failed_handles).
+def fetch_social_articles(social_config: dict) -> tuple[list[Article], list[str], list[str]]:
+    """Return (articles, auth_failed_handles, other_failed_handles).
 
     auth_failed_handles contains handles that returned HTTP 401/403, indicating
     the RSSHub OAuth token needs renewal.
@@ -51,6 +51,7 @@ def fetch_social_articles(social_config: dict) -> tuple[list[Article], list[str]
     cutoff = datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)
     articles: list[Article] = []
     auth_failed_handles: list[str] = []
+    other_failed_handles: list[str] = []
 
     for account in accounts:
         handle = account["handle"]
@@ -70,9 +71,11 @@ def fetch_social_articles(social_config: dict) -> tuple[list[Article], list[str]
                 auth_failed_handles.append(handle)
             else:
                 logger.warning(f"Social fetch failed for @{handle}: {e}")
+                other_failed_handles.append(f"@{handle} (HTTP {e.response.status_code})")
             continue
         except Exception as e:
             logger.warning(f"Social fetch failed for @{handle}: {e}")
+            other_failed_handles.append(f"@{handle} ({type(e).__name__})")
             continue
 
         for entry in parsed.entries:
@@ -97,5 +100,11 @@ def fetch_social_articles(social_config: dict) -> tuple[list[Article], list[str]
                 summary=summary[:600],
             ))
 
-    logger.info(f"Social fetcher: {len(articles)} posts from {len(accounts)} accounts")
-    return articles, auth_failed_handles
+    logger.info(
+        "Social fetcher: %s posts from %s accounts (%s auth failures, %s other failures)",
+        len(articles),
+        len(accounts),
+        len(auth_failed_handles),
+        len(other_failed_handles),
+    )
+    return articles, auth_failed_handles, other_failed_handles
