@@ -117,13 +117,17 @@ Add these three secrets one by one (click **New repository secret** for each):
 
 **Getting the GH_PAT:**
 
-The dashboard uses this token to read your briefing files AND to trigger workflow runs (Generate button). It needs two scopes for both to work.
+The dashboard uses this token to read your briefing files, trigger the Generate runs, and manage a few settings. We'll make a **fine-grained token** scoped to just your repo — safer than a broad classic token.
 
-1. Go to [github.com/settings/tokens/new](https://github.com/settings/tokens/new)
-2. Give it any name, set expiry to an amount of days
-3. Check **two scopes**: **`repo`** (top-level checkbox) and **`workflow`**
-4. Click **Generate token** — copy it immediately, you won't see it again <-- you will also need this to log-in to the dashboard! (Only need to input it once per device, saved in cookies. You'll also be able to view it later after finishing step 5 directly underneath if you lose it somehow -- or just make a new one)
-5. Add it as the `GH_PAT` secret
+1. Go to [github.com/settings/tokens?type=beta](https://github.com/settings/tokens?type=beta) and click **Generate new token**
+2. Give it a name (e.g. `Consult-Workshop dashboard`) and set an expiry (90 days is fine)
+3. Under **Repository access** → select **Only select repositories** → pick your fork
+4. Under **Permissions** → open **Repository permissions** and set these three:
+   - **Contents** → **Read and write** *(reads briefings; lets you add/remove sources from the dashboard)*
+   - **Actions** → **Read and write** *(triggers the Generate runs; checks run status)*
+   - **Variables** → **Read and write** *(saves your default model choice)*
+5. Click **Generate token** — copy it immediately, you won't see it again. You'll also need it to log in to the dashboard in Step 9, so keep it somewhere handy for now (notes app is fine, you'll paste it twice)
+6. Add it as the `GH_PAT` secret
 
 ---
 
@@ -233,7 +237,7 @@ These cookies expire after roughly 30 days. When Twitter accounts stop appearing
 → `core_focus` and `tier_1` in `report_profile.yaml` are too vague. Name specific institutions, geographies, or datasets. Also make sure your feeds actually cover your topic.
 
 **Dashboard says "Token rejected" or Generate button gives a permissions error**
-→ The GH_PAT has expired or is missing a scope. It needs both `repo` AND `workflow` checked. Generate a new one (Step 6).
+→ The GH_PAT has expired or is missing a permission. Make sure you created a fine-grained token (not a classic one) with **Contents**, **Actions**, and **Variables** all set to **Read and write**, scoped to your repo. Generate a new one following Step 6.
 
 **Dashboard says "Failed to load sources" or shows nothing**
 → The dashboard auto-detects your username and repo from the GitHub Pages URL, so this usually means you're not on the Pages URL yet (e.g. you opened `index.html` as a local file). Open the dashboard via `https://YOUR-USERNAME.github.io/Consult-Workshop` instead. If that still fails, check that GitHub Pages is deployed (Actions tab → Deploy Dashboard run should be green).
