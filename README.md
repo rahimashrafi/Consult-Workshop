@@ -44,11 +44,11 @@ Your fork is now at `https://github.com/YOUR-USERNAME/Consult-Workshop`.
 
 ### Step 2 — Define your research profile
 
-Open `config/report_profile.yaml` (click the file, then the pencil ✏️ icon) and fill in the fields. This is what tells the LLM what counts as relevant. The inline comments explain each field.
+Open `config/report_profile.yaml` (click the file, then the pencil icon) and fill in the fields. This is what tells the LLM what counts as relevant. The inline comments explain each field.
 
 The most important fields:
 
-- **`core_focus`** — 2–4 sentences on what your research is actually about. Be specific. *"AI policy in Europe"* is too broad. *"How the EU AI Act affects compliance costs for Dutch insurance companies"* is good. The more concrete you are, the better the scoring.
+- **`core_focus`** — 2–4 sentences on what you care about, what goal you want to achieve with the daily briefings. Be specific. *"AI policy in Europe"* is too broad. *"How the EU AI Act affects compliance costs for Dutch insurance companies"* is good. The more concrete you are, the better the scoring.
 - **`themes`** — list 6–12 specific topics to track
 - **`tier_1` description** — what does "perfectly relevant" look like for your topic? Describe the criteria the LLM should use.
 
@@ -83,6 +83,8 @@ social:
 
 The `handle` is the Twitter username without the `@`. Add as many as you want. The pipeline summarises what they're all discussing in a separate section of the briefing.
 
+You can also use popular LLMs ofcourse to help you search for relevant folk's twitter handles and have it fill in the format above.
+
 The RSSHub URL itself comes from a secret you'll add in Step 6 — no need to put it in this file.
 
 ---
@@ -92,9 +94,9 @@ The RSSHub URL itself comes from a secret you'll add in Step 6 — no need to pu
 Open `web/config.js` and change three lines:
 
 ```javascript
-const OWNER           = 'your-github-username';  // ← your GitHub username
-const REPO            = 'Consult-Workshop';        // ← your repo name (if you renamed the fork, update this)
-const DASHBOARD_TITLE = 'My Briefing Dashboard';  // ← whatever you want to call it
+const OWNER           = 'your-github-username';  // your GitHub username
+const REPO            = 'Consult-Workshop';        // your repo name (if you renamed the fork, update this!!!!!)
+const DASHBOARD_TITLE = 'My Briefing Dashboard';  // whatever you want to call it
 ```
 
 Commit.
@@ -118,8 +120,8 @@ Add these three secrets one by one (click **New repository secret** for each):
 The dashboard reads your repo's files via the GitHub API, and it needs a token to do that.
 
 1. Go to [github.com/settings/tokens/new](https://github.com/settings/tokens/new)
-2. Give it any name, set expiry to 90 days, check the **`repo`** scope (top-level checkbox)
-3. Click **Generate token** — copy it immediately, you won't see it again
+2. Give it any name, set expiry to an amount of days, check the **`repo`** scope (top-level checkbox)
+3. Click **Generate token** — copy it immediately, you won't see it again <-- temporarily put it in a notepad or something just in case
 4. Add it as the `GH_PAT` secret
 
 ---
@@ -127,6 +129,8 @@ The dashboard reads your repo's files via the GitHub API, and it needs a token t
 ### Step 7 — Enable GitHub Pages
 
 Go to **Settings → Pages**, set **Source** to **GitHub Actions**, click **Save**. That's it. The first deploy happens automatically when you push to `main` — takes about a minute.
+
+When you make changes to the code, it can take up to 3min for the changes to be visible on the Github Page. Can be a bit annoying when you quickly want to test some things, but eh, it's free so can't complain too much, make yourself a drink in the meanwhile!
 
 ---
 
@@ -138,7 +142,9 @@ Go to the **Actions** tab → **Daily Briefing** → **Run workflow → Run work
 
 ### Step 9 — Open the dashboard
 
-Go to `https://YOUR-USERNAME.github.io/Consult-Workshop`. On the auth screen, paste your `GH_PAT` (from Step 6) and click Save. Your first briefing should be right there.
+Go to `https://YOUR-USERNAME.github.io/Consult-Workshop`. On the auth screen, paste your `GH_PAT` (from Step 6) and click Save. Your first briefing should be right there. If you changed the name of the repo when you forked the original, you need to replace 'Consult-Workshop' with that name!!
+
+This URL will be what you can use going forward to visit your dashboard. If you make other Github Pages (which is easy to do with coding agents that are everywhere now) they use the same format, with the git-repo name replacing 'Consult-Workshop'. This can allow you to easily make fancy looking portfolio websites that cost you zero in hosting and complies well with coding agents. The pages are static so they are somewhat limited in what they can do, but for 90% of simple use cases they work fine.
 
 ---
 
@@ -157,6 +163,8 @@ const MODELS = [
   // ...
 ];
 ```
+
+The costs are simple guestimations (put in costIn and costOut), you can edit those depending on what you see happening on OpenRouter for yourself. Costs increase/decrease as updates come and go and the context of the briefing increases or decreases. You don't need big expensive models for this workflow generally.
 
 Note: some models need to be explicitly enabled on your OpenRouter account before they work. If a run fails with an auth or model error, check [openrouter.ai/settings/credits](https://openrouter.ai/settings/credits) to make sure the model is available.
 
@@ -234,31 +242,6 @@ These cookies expire after roughly 30 days. When Twitter accounts stop appearing
 
 **Twitter accounts stopped showing up**
 → The RSSHub auth cookies expired. See [Setting up your own RSSHub](#setting-up-your-own-rsshub-after-the-workshop) → Getting the Twitter auth cookies.
-
----
-
-## Running locally (optional)
-
-If you want to test before pushing:
-
-```bash
-git clone https://github.com/YOUR-USERNAME/Consult-Workshop.git
-cd Consult-Workshop
-
-python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-cp .env.example .env
-# Edit .env and set OPENROUTER_API_KEY=your_key_here
-
-python -m src.briefing.run --dry-run  # fetches articles, skips LLM (free)
-python -m src.briefing.run            # full run
-```
-
-Output goes to `outputs/briefing_YYYY-MM-DD_HHMM.md`.
-
----
 
 ## Syncing updates
 
