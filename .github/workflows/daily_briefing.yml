@@ -36,7 +36,7 @@ jobs:
       - name: Run briefing
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENROUTER_MODEL: ${{ github.event.inputs.model || vars.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4.6' }}
+          OPENROUTER_MODEL: ${{ github.event.inputs.model || vars.OPENROUTER_MODEL || 'anthropic/claude-haiku-4.5' }}
           RSSHUB_INSTANCE: ${{ secrets.RSSHUB_INSTANCE }}
           OUTPUT_DIR: outputs
           LOOKBACK_HOURS:   ${{ vars.LOOKBACK_HOURS   || '25' }}

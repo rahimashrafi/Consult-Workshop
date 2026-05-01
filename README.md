@@ -1,68 +1,42 @@
-# Consult-Workshop — Build Your Own AI News Briefing
+# Consult-Workshop — Your Own Daily AI Briefing
 
-Fork this repository and you will have a personalised daily AI briefing delivered to a web dashboard — automatically, for free, using GitHub Actions and GitHub Pages. No server to run. No subscription needed beyond an OpenRouter API key.
+You're going to build a small automated pipeline that wakes up every morning, fetches articles from news feeds you choose, scores each one against your own research profile using an LLM, and publishes a clean summary to a web dashboard. Everything runs on GitHub — no server, no subscription, nothing to install locally unless you want to.
 
-By the end of this guide you will have:
-- A web dashboard at `https://YOUR-USERNAME.github.io/Consult-Workshop`
-- A daily briefing that fetches articles from your chosen RSS feeds, scores them with an LLM against your research profile, and publishes a Markdown summary to your repo every morning
-- A weekly round-up generated every Sunday
-- A manual trigger to run a briefing on demand at any time
+By the end of this you'll have a dashboard at `https://YOUR-USERNAME.github.io/Consult-Workshop` with a fresh briefing waiting for you every morning.
 
 ---
 
-## What you get
+## What it does
 
-| Feature | Details |
-|---------|---------|
-| **Daily briefing** | Fetches articles from your RSS feeds, scores relevance (Tier 0–3) with an LLM, generates an executive summary for the best articles |
-| **Web dashboard** | GitHub Pages site to read all your briefings; no login needed beyond your own GitHub token |
-| **Weekly round-up** | A synthesised overview of the week's briefings, generated every Sunday |
-| **Manual trigger** | Run a briefing from the Actions tab at any time, choose any model |
-| **Source discovery** | Give the "Add source" workflow any website URL — it finds the RSS feed and adds it automatically |
-| **Serendipity** | A random sample of sources from an extended pool is added to each run, surfacing unexpected signals |
+- **Daily briefing** — fetches your RSS feeds, has an LLM score each article for relevance to your topic (Tier 0–3), writes an executive summary for the best ones, and commits the result to your repo as a Markdown file
+- **Web dashboard** — reads those files via the GitHub API and displays them; log in once with your own GitHub token
+- **Weekly round-up** — a synthesis of the week's briefings, generated every Sunday
+- **Social monitoring** — pulls in posts from Twitter/X accounts you follow and summarises what they're discussing
+- **Manual trigger** — run a briefing on demand from the Actions tab at any time
+- **Source discovery** — paste any website URL into the "Add source" workflow and it finds the RSS feed automatically
 
 ---
 
-## How it works
+## What I'm giving you for the workshop
 
-```
-1. GitHub Actions wakes up at 08:00 every morning (configurable)
-2. Python fetches articles from your RSS feeds (last 25 hours)
-3. Articles are sent to an LLM (via OpenRouter) with your research profile
-4. The LLM assigns each article a relevance tier:
-      Tier 1 — perfectly relevant    ← shown first
-      Tier 2 — broadly relevant      ← shown second
-      Tier 3 — low signal            ← hidden by default
-      Tier 0 — exclude               ← never shown
-5. An executive summary is generated for the Tier 1 articles
-6. The briefing is saved as a Markdown file in briefings/ and committed to your repo
-7. Your GitHub Pages dashboard reads the briefings via the GitHub API and displays them
-```
+For the session itself you don't need to create any accounts yet. I'll give you:
 
-The whole pipeline runs inside GitHub Actions — you do not need a server, a database, or a local Python environment (though you can run it locally too; see [Local development](#local-development-optional)).
+- An **OpenRouter API key** — this is what pays for the LLM calls. You can get your own later at [openrouter.ai/keys](https://openrouter.ai/keys); for now just use the one I give you.
+- An **RSSHub instance URL** — this is what converts Twitter/X accounts into RSS feeds. I'm running my own on Railway, you can use it. If you want to set up your own after the workshop, there's a section at the bottom on how to do that.
+
+The only account you actually need right now is a **GitHub account** (free).
 
 ---
 
-## Prerequisites
+## Setting up
 
-- A **GitHub account** (free tier is fine)
-- An **OpenRouter API key** — get one at [openrouter.ai/keys](https://openrouter.ai/keys)
-  *(Your instructor may provide a key for the workshop session. You can add your own key later.)*
-- Basic comfort with editing text files and clicking around GitHub. No local tooling required.
+Work through these in order. Most steps are just editing a file and clicking commit.
 
 ---
 
-## Workshop setup
+### Step 1 — Fork the repo
 
-Work through these steps in order. Each step takes 2–5 minutes.
-
----
-
-### Step 1 — Fork this repository
-
-1. Click **Fork** in the top-right corner of this page
-2. Leave the repository name as `Consult-Workshop` (or rename it — just remember the new name for Step 4)
-3. Click **Create fork**
+Click **Fork** in the top-right corner. Leave the name as `Consult-Workshop` or rename it — just remember the name for Step 5. Click **Create fork**.
 
 Your fork is now at `https://github.com/YOUR-USERNAME/Consult-Workshop`.
 
@@ -70,301 +44,222 @@ Your fork is now at `https://github.com/YOUR-USERNAME/Consult-Workshop`.
 
 ### Step 2 — Define your research profile
 
-This is the most important step. The LLM reads this file to decide what counts as relevant.
+Open `config/report_profile.yaml` (click the file, then the pencil ✏️ icon) and fill in the fields. This is what tells the LLM what counts as relevant. The inline comments explain each field.
 
-1. In your fork, open `config/report_profile.yaml` (click the file, then the pencil icon ✏️)
-2. Fill in every field — follow the inline comments for guidance:
-   - **`title` / `title_en`** — the name of your research area
-   - **`perspective`** — your analytical standpoint in one sentence
-   - **`core_focus`** — 2–4 sentences describing your topic, geography, and angle
-   - **`themes`** — 6–12 specific themes you want to track
-   - **`key_actors`** — organisations or people to watch
-   - **`tier_1` description** — what makes an article "perfectly relevant" to you
-   - **`tier_2` description** — what makes an article "broadly relevant"
-3. Commit directly to `main` (the default commit option)
+The most important fields:
 
-> **Tip:** Be concrete in `core_focus`. Instead of *"AI policy"*, write *"How EU AI regulation affects insurance companies in Germany, focusing on compliance costs and competitive dynamics."* The more specific you are, the better the LLM scores articles.
+- **`core_focus`** — 2–4 sentences on what your research is actually about. Be specific. *"AI policy in Europe"* is too broad. *"How the EU AI Act affects compliance costs for Dutch insurance companies"* is good. The more concrete you are, the better the scoring.
+- **`themes`** — list 6–12 specific topics to track
+- **`tier_1` description** — what does "perfectly relevant" look like for your topic? Describe the criteria the LLM should use.
+
+Commit when done.
 
 ---
 
-### Step 3 — Choose your news sources
+### Step 3 — Choose your RSS feeds
 
-1. Open `config/sources.yaml`
-2. Replace or add to the example feeds with sources relevant to your topic
-3. Each entry needs:
-   ```yaml
-   - name: Source Name
-     url: https://example.com/feed
-     category: your_category   # free-form label, for your own organisation
-     language: en               # or nl — display only, does not filter
-   ```
-4. To find a feed URL: try adding `/feed`, `/rss`, or `/feed.xml` to any news site's domain, or use [feedsearch.dev](https://feedsearch.dev)
-5. Commit when done
+Open `config/sources.yaml` and replace or add to the example feeds in the `rss_feeds` section. Each entry needs a name, a URL, a category label (can be anything — it's just for your own organisation), and a language.
 
-> **Tip:** Start with 6–12 feeds. You can add more later using the "Add source" workflow (see [Adding sources](#adding-sources-after-setup)).
+To find a feed URL: most news sites expose one at `/feed`, `/rss`, or `/feed.xml`. Try appending those to any domain, or use [feedsearch.dev](https://feedsearch.dev). Alternatively, use the "Add source" workflow in the Actions tab — you paste a URL and it discovers the feed automatically.
+
+Start with 6–12 feeds. You can always add more later.
 
 ---
 
-### Step 4 — Point the dashboard at your fork
+### Step 4 — Add your Twitter/X accounts
 
-1. Open `web/config.js`
-2. Change `'your-github-username'` to your actual GitHub username
-3. Change `'Consult-Workshop'` if you renamed your fork
-4. Optionally change `DASHBOARD_TITLE` to anything you like
-5. Commit
+Still in `config/sources.yaml`, scroll to the `social` section and add the Twitter/X accounts you want to follow. Pick people who post about your research topic — researchers, journalists, policy makers, whoever.
 
-```javascript
-const OWNER           = 'your-github-username';  // ← change this
-const REPO            = 'Consult-Workshop';        // ← change if you renamed the fork
-const DASHBOARD_TITLE = 'My Briefing Dashboard';  // ← optional: rename
+```yaml
+social:
+  twitter_accounts:
+    - handle: ylecun
+      name: Yann LeCun
+      relevance_hint: AI research, open-source AI debates
+    - handle: AndrewYNg
+      name: Andrew Ng
+      relevance_hint: AI industry, education
 ```
 
----
+The `handle` is the Twitter username without the `@`. Add as many as you want. The pipeline summarises what they're all discussing in a separate section of the briefing.
 
-### Step 5 — Add the API key secret
-
-1. In your fork, go to **Settings → Secrets and variables → Actions**
-2. Click **New repository secret**
-3. Name: `OPENROUTER_API_KEY`
-4. Value: your OpenRouter API key
-5. Click **Add secret**
-
-> Secrets are encrypted and never visible after saving — not even to you. They are injected into the GitHub Actions environment at runtime.
+The RSSHub URL itself comes from a secret you'll add in Step 6 — no need to put it in this file.
 
 ---
 
-### Step 6 — Add the dashboard access token
+### Step 5 — Point the dashboard at your fork
 
-The dashboard reads your repo's files via the GitHub API. It needs a personal access token (PAT) with `repo` scope.
+Open `web/config.js` and change three lines:
+
+```javascript
+const OWNER           = 'your-github-username';  // ← your GitHub username
+const REPO            = 'Consult-Workshop';        // ← your repo name (if you renamed the fork, update this)
+const DASHBOARD_TITLE = 'My Briefing Dashboard';  // ← whatever you want to call it
+```
+
+Commit.
+
+---
+
+### Step 6 — Add your secrets
+
+Go to your fork → **Settings → Secrets and variables → Actions**.
+
+Add these three secrets one by one (click **New repository secret** for each):
+
+| Secret name | Value |
+|-------------|-------|
+| `OPENROUTER_API_KEY` | The API key I gave you |
+| `RSSHUB_INSTANCE` | The RSSHub URL I gave you |
+| `GH_PAT` | A GitHub personal access token — see below |
+
+**Getting the GH_PAT:**
+
+The dashboard reads your repo's files via the GitHub API, and it needs a token to do that.
 
 1. Go to [github.com/settings/tokens/new](https://github.com/settings/tokens/new)
-   - Note / description: `Consult-Workshop dashboard`
-   - Expiration: **90 days** (or longer if you want it to keep working)
-   - Scopes: check **`repo`** (the top-level checkbox)
-2. Click **Generate token** — copy it immediately (it will not be shown again)
-3. Back in your repo: **Settings → Secrets and variables → Actions → New repository secret**
-   - Name: `GH_PAT`
-   - Value: the token you just copied
-4. Click **Add secret**
-
-> This token is stored as a GitHub secret and is never in your code. It only gives read access to your own public repo.
+2. Give it any name, set expiry to 90 days, check the **`repo`** scope (top-level checkbox)
+3. Click **Generate token** — copy it immediately, you won't see it again
+4. Add it as the `GH_PAT` secret
 
 ---
 
 ### Step 7 — Enable GitHub Pages
 
-1. In your fork, go to **Settings → Pages**
-2. Under **Source**, select **GitHub Actions** (not "Deploy from a branch")
-3. Click **Save**
-
-The first deployment happens automatically when you push to `main`. It takes about 1–2 minutes.
+Go to **Settings → Pages**, set **Source** to **GitHub Actions**, click **Save**. That's it. The first deploy happens automatically when you push to `main` — takes about a minute.
 
 ---
 
 ### Step 8 — Run your first briefing
 
-1. Go to the **Actions** tab in your fork
-2. In the left sidebar, click **Daily Briefing**
-3. Click **Run workflow → Run workflow** (leave the model field blank)
-4. Watch the run — it takes about 60–90 seconds
-5. When the green checkmark appears, a new file is in `briefings/`
+Go to the **Actions** tab → **Daily Briefing** → **Run workflow → Run workflow**. Leave the model field blank. It takes about 60–90 seconds. When the green checkmark appears, there's a new file in `briefings/`.
 
 ---
 
-### Step 9 — Open your dashboard
+### Step 9 — Open the dashboard
 
-1. Your dashboard URL is: `https://YOUR-USERNAME.github.io/Consult-Workshop`
-2. On the auth screen, paste your **GH_PAT** token (from Step 6) and click **Save**
-3. Your first briefing should appear under **Daily briefings**
+Go to `https://YOUR-USERNAME.github.io/Consult-Workshop`. On the auth screen, paste your `GH_PAT` (from Step 6) and click Save. Your first briefing should be right there.
 
 ---
 
-## Configuration reference
+## Things you can change
 
-### `config/report_profile.yaml` — field guide
+### Choosing a different model
 
-| Field | What to write |
-|-------|--------------|
-| `title` | Full title of your report (any language) |
-| `title_en` | English version — appears in the briefing header |
-| `perspective` | Your analytical standpoint in one line |
-| `core_focus` | 2–4 sentences: topic, geography, angle |
-| `themes` | List of 6–12 specific themes to track |
-| `key_actors` | Organisations or people to watch closely |
-| `tier_1` description | What makes an article "perfectly relevant" to you — be specific |
-| `tier_2` description | What makes an article "broadly relevant" — can be wider |
+Haiku 4.5 is the default — it's fast, cheap (~€0.01–0.02 per briefing), and good enough for scoring and summarising news articles. If you want higher quality or want to try something else, change the `isDefault: true` flag in `web/config.js`.
 
-After editing, commit and push. The next briefing run will use your updated profile.
+To find models: go to [openrouter.ai/models](https://openrouter.ai/models), pick one, and copy its model ID (the string like `anthropic/claude-sonnet-4-5`). Add it to the `MODELS` array in `config.js`:
 
----
+```javascript
+const MODELS = [
+  { id: 'anthropic/claude-haiku-4.5',  label: 'Claude Haiku 4.5',  costIn: 0.25, costOut: 1.25, isDefault: true },
+  { id: 'mistralai/mistral-small-3.2', label: 'Mistral Small 3.2', costIn: 0.10, costOut: 0.30 },
+  // ...
+];
+```
 
-### `config/sources.yaml` — section guide
-
-| Section | Behaviour |
-|---------|-----------|
-| `rss_feeds` | Fetched on every single run |
-| `serendipity_sources` | Randomly sampled — 3 sources per run by default |
-| `social` | Twitter/X accounts via RSSHub (optional — see [Twitter/X monitoring](#twitterx-social-monitoring-optional)) |
-
-Each feed entry needs `name`, `url`, `category`, and `language`. The `category` field is a free-form label for your own organisation and does not affect LLM scoring.
+Note: some models need to be explicitly enabled on your OpenRouter account before they work. If a run fails with an auth or model error, check [openrouter.ai/settings/credits](https://openrouter.ai/settings/credits) to make sure the model is available.
 
 ---
 
-### `web/config.js` — field guide
+### Changing the schedule
 
-| Variable | What to set |
-|----------|-------------|
-| `OWNER` | Your GitHub username |
-| `REPO` | Your repository name |
-| `DASHBOARD_TITLE` | Title shown in browser tab and page header |
-| `MODELS` | LLM options in the dashboard dropdown. Edit freely — keep the object shape. |
-
----
-
-### Behaviour variables (optional)
-
-These can be set as **repository variables** (not secrets) at **Settings → Secrets and variables → Actions → Variables → New repository variable**. If not set, the defaults shown below are used.
-
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `OPENROUTER_MODEL` | `anthropic/claude-sonnet-4.6` | Default model for scheduled runs |
-| `LOOKBACK_HOURS` | `25` | How many hours back to look for articles |
-| `SERENDIPITY_N` | `3` | Sources randomly sampled from the serendipity pool per run |
-| `TIER1_THRESHOLD` | `3` | Minimum Tier 1 articles before the pipeline stops iterating |
-| `MAX_ITERATIONS` | `3` | Maximum fetch-and-score iterations if Tier 1 count is low |
-| `INCLUDE_TIER3` | `false` | Set to `true` to show low-signal (Tier 3) articles |
-
----
-
-## Adding sources after setup
-
-**Method A — automated (recommended):**
-1. Go to **Actions → Add source → Run workflow**
-2. Paste one or more website URLs (comma-separated)
-3. The workflow visits each site, discovers the RSS feed, and adds it to `config/sources.yaml`
-
-**Method B — manual:**
-Edit `config/sources.yaml` directly, following the format of existing entries. Commit when done.
-
----
-
-## Changing the schedule
-
-Open `.github/workflows/daily_briefing.yml` and edit the `cron` line:
+Open `.github/workflows/daily_briefing.yml` and edit the cron line:
 
 ```yaml
 - cron: '0 6 * * *'  # 06:00 UTC = 08:00 CEST
 ```
 
-Use [crontab.guru](https://crontab.guru) to build your own expression. All times are **UTC** — subtract 2 hours for CEST, 1 hour for CET.
-
-Examples:
-- `0 6 * * *` — every day at 08:00 CEST
-- `0 7 * * 1-5` — weekdays only at 09:00 CEST
-- `0 5 * * *` — every day at 07:00 CEST
+Use [crontab.guru](https://crontab.guru) to build your own expression. Times are in UTC — subtract 2 hours for CEST, 1 for CET.
 
 ---
 
-## Twitter/X social monitoring (optional)
+### Behaviour knobs (optional)
 
-Twitter/X requires a self-hosted [RSSHub](https://rsshub.app) instance with OAuth credentials. The public `rsshub.app` no longer serves Twitter feeds reliably.
+These can be set as **repository variables** at **Settings → Secrets and variables → Actions → Variables**. They all have sensible defaults so you don't need to touch them, but they're there if you want to experiment.
 
-**Quickest setup: Railway one-click deploy**
+| Variable | Default | What it does |
+|----------|---------|-------------|
+| `LOOKBACK_HOURS` | `25` | How far back to look for articles |
+| `SERENDIPITY_N` | `3` | Extra sources randomly sampled per run from the serendipity pool |
+| `TIER1_THRESHOLD` | `3` | Minimum Tier 1 articles before the pipeline stops iterating |
+| `INCLUDE_TIER3` | `false` | Set to `true` to show low-signal articles in the briefing |
+| `OPENROUTER_MODEL` | `anthropic/claude-haiku-4.5` | Default model for scheduled runs (overrides config.js) |
+
+---
+
+## Setting up your own RSSHub (after the workshop)
+
+During the workshop you're using my RSSHub instance. If you want to keep running your own briefing after we're done, you'll need your own — or you're welcome to keep using mine for a while, just let me know.
+
+RSSHub is an open-source tool that converts all kinds of websites (Twitter/X included) into RSS feeds. The quickest way to run it is on [Railway](https://railway.app):
 
 1. Sign up at [railway.app](https://railway.app)
 2. Deploy the [DIYgod/RSSHub](https://docs.rsshub.app/deploy/railway) template (~€3–5/month)
-3. In your Railway project, add environment variables for `TWITTER_AUTH_TOKEN` and `TWITTER_CT0` (see [RSSHub docs](https://docs.rsshub.app/deploy/))
-4. Add your Railway URL as a GitHub secret: **`RSSHUB_INSTANCE`** = `https://your-app.railway.app`
-5. In `config/sources.yaml`, uncomment `rsshub_instance` and add `twitter_accounts` entries:
-   ```yaml
-   social:
-     rsshub_instance: https://your-app.railway.app
-     twitter_accounts:
-       - handle: sama
-         name: Sam Altman
-         relevance_hint: AI industry, OpenAI, regulation views
-   ```
+3. In your Railway project, set the `TWITTER_AUTH_TOKEN` and `TWITTER_CT0` environment variables (instructions below)
+4. Update your `RSSHUB_INSTANCE` secret in GitHub to point to your Railway URL
 
-**Monthly maintenance:** Twitter OAuth cookies expire after roughly 30 days. To renew: open X in your browser, open DevTools → Application → Cookies → `x.com`, copy the `auth_token` and `ct0` values, and update them in your Railway project's environment variables.
+**Getting the Twitter auth cookies**
 
----
+RSSHub uses your own Twitter session to fetch feeds. To get the values:
 
-## Approximate cost
+1. Log in to [x.com](https://x.com) in your browser
+2. Open DevTools (F12) → **Application** → **Cookies** → `https://x.com`
+3. Copy the values for `auth_token` and `ct0`
+4. Set them as `TWITTER_AUTH_TOKEN` and `TWITTER_CT0` in your Railway project's Variables tab
 
-| Component | Cost |
-|-----------|------|
-| GitHub Actions (public repo) | Free |
-| GitHub Pages (public repo) | Free |
-| OpenRouter — Claude Sonnet 4.6 | ~$0.05–0.20 per briefing run |
-| OpenRouter — Claude Haiku 4.5 | ~$0.01–0.02 per run (12× cheaper) |
-| Railway RSSHub (Twitter only) | ~€3–5/month |
-
-The briefing pipeline processes roughly 15K input tokens and 1.5K output tokens per run. Haiku 4.5 is a good budget option if cost matters.
+These cookies expire after roughly 30 days. When Twitter accounts stop appearing in your briefing, that's why — just repeat the steps above to refresh them.
 
 ---
 
 ## Troubleshooting
 
-**The briefing run failed immediately**
-→ Check that `OPENROUTER_API_KEY` is set as a **secret** (Settings → Secrets), not a variable. Click the failed run in the Actions tab and expand the "Run briefing" step to read the error.
+**The run failed right away**
+→ Check that `OPENROUTER_API_KEY` is added as a *secret* (not a variable). Open the failed run and expand the "Run briefing" step to read the actual error.
 
-**All articles are Tier 3 or the briefing says "LLM scoring skipped"**
-→ Your API key is missing, invalid, or out of credit. Check at [openrouter.ai/keys](https://openrouter.ai/keys). Also verify the model name in `OPENROUTER_MODEL` is a valid OpenRouter model ID.
+**Everything is Tier 3 / "LLM scoring skipped"**
+→ The API key is wrong, expired, or out of credit. Check at [openrouter.ai/keys](https://openrouter.ai/keys). Also double-check the model name is a valid OpenRouter ID.
 
-**The briefing runs but the articles seem unrelated to my topic**
-→ Your `core_focus` and `tier_1` description in `report_profile.yaml` are too vague. Name specific institutions, datasets, or geographies. Also check that your feeds in `sources.yaml` actually cover your topic.
+**The briefing runs but the articles seem off-topic**
+→ `core_focus` and `tier_1` in `report_profile.yaml` are too vague. Name specific institutions, geographies, or datasets. Also make sure your feeds actually cover your topic.
 
-**The dashboard says "Token rejected or no access to repo"**
-→ Your GH_PAT has expired or was not created with `repo` scope. Generate a new token (Step 6) and update the secret.
+**Dashboard says "Token rejected"**
+→ The GH_PAT has expired or doesn't have `repo` scope. Generate a new one (Step 6).
 
-**The dashboard says "Failed to load sources" or shows an empty briefings list**
-→ Your `OWNER` or `REPO` in `web/config.js` does not match your actual GitHub username or repo name. Check for typos — GitHub usernames are case-sensitive.
+**Dashboard says "Failed to load sources" or shows nothing**
+→ `OWNER` or `REPO` in `web/config.js` doesn't match your actual username or repo name. GitHub usernames are case-sensitive.
 
-**The dashboard URL gives a 404**
-→ Make sure Pages is configured to use **GitHub Actions** as the source (Settings → Pages), not a branch. Check the Actions tab for a "Deploy Dashboard" workflow run and read any errors.
+**Dashboard gives a 404**
+→ Go to Settings → Pages and confirm the source is set to **GitHub Actions** (not a branch). Check the Actions tab for a Deploy run.
 
-**Twitter accounts stopped appearing**
-→ The RSSHub OAuth cookies have expired. See [Twitter/X monitoring](#twitterx-social-monitoring-optional) → Monthly maintenance.
-
-**I can't find the RSS feed for a site**
-→ Use the "Add source" workflow first — it auto-discovers most feeds. If that fails, try appending `/feed`, `/rss`, or `/feed.xml` to the domain. [feedsearch.dev](https://feedsearch.dev) is a useful last resort.
+**Twitter accounts stopped showing up**
+→ The RSSHub auth cookies expired. See [Setting up your own RSSHub](#setting-up-your-own-rsshub-after-the-workshop) → Getting the Twitter auth cookies.
 
 ---
 
-## Local development (optional)
+## Running locally (optional)
 
-If you want to test the pipeline on your own machine before pushing:
+If you want to test before pushing:
 
 ```bash
-# 1. Clone your fork
 git clone https://github.com/YOUR-USERNAME/Consult-Workshop.git
 cd Consult-Workshop
 
-# 2. Create a virtual environment and install dependencies
 python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 3. Copy the environment file and fill in your API key
 cp .env.example .env
 # Edit .env and set OPENROUTER_API_KEY=your_key_here
 
-# 4. Test run (fetches articles, skips LLM — free)
-python -m src.briefing.run --dry-run
-
-# 5. Full run (uses your API key)
-python -m src.briefing.run
+python -m src.briefing.run --dry-run  # fetches articles, skips LLM (free)
+python -m src.briefing.run            # full run
 ```
 
-Output is written to `outputs/briefing_YYYY-MM-DD_HHMM.md`.
+Output goes to `outputs/briefing_YYYY-MM-DD_HHMM.md`.
 
 ---
 
-## Syncing updates from this base repo
+## Syncing updates
 
-If improvements are pushed to this `Consult-Workshop` base repo, you can pull them into your fork:
-
-1. On your fork's main page, click **Sync fork → Update branch**
-2. If you have edited `config/report_profile.yaml` or `config/sources.yaml`, GitHub will flag merge conflicts — resolve them manually to keep your customisations
-
-> **Important:** Sync only after committing your own changes first, otherwise the sync may overwrite your configuration files.
+If I push improvements to this base repo, you can pull them into your fork by clicking **Sync fork → Update branch** on your fork's main page. If you've edited `config/report_profile.yaml` or `config/sources.yaml`, GitHub will flag merge conflicts — resolve them to keep your customisations.

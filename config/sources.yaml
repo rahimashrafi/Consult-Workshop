@@ -72,28 +72,26 @@ rss_feeds:
 
 
 # =============================================================================
-# TWITTER / X SOCIAL MONITORING (optional — requires RSSHub)
+# TWITTER / X SOCIAL MONITORING
 #
-# Twitter/X feeds require a self-hosted RSSHub instance with OAuth credentials.
-# See README.md § "Twitter/X social monitoring" for setup instructions.
+# The RSSHub instance URL comes from the RSSHUB_INSTANCE secret you add in
+# GitHub — you don't need to put the URL here. Your instructor will give you
+# that URL during the workshop.
 #
-# To enable:
-#   1. Set up RSSHub on Railway (see README).
-#   2. Add RSSHUB_INSTANCE as a GitHub secret pointing to your Railway URL.
-#   3. Uncomment the rsshub_instance line below and add account entries.
+# Add the Twitter/X accounts you want to follow below. Pick people who are
+# relevant to your research topic: researchers, journalists, policy makers,
+# whoever. You can always add more later.
 # =============================================================================
 
 social:
-  # rsshub_instance: https://your-rsshub-url.railway.app
-  twitter_accounts: []
-  # Uncomment and edit to add accounts:
-  # twitter_accounts:
-  #   - handle: sama
-  #     name: Sam Altman
-  #     relevance_hint: AI industry, OpenAI, regulation views
-  #   - handle: ylecun
-  #     name: Yann LeCun
-  #     relevance_hint: AI research, open-source AI debates
+  twitter_accounts:
+    # Format: handle (without the @), a display name, and a short note on why.
+    #
+    # - handle: ylecun
+    #   name: Yann LeCun
+    #   relevance_hint: AI research, open-source AI debates
+    #
+    # Add your accounts here:
 
 
 # =============================================================================
