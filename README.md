@@ -117,12 +117,13 @@ Add these three secrets one by one (click **New repository secret** for each):
 
 **Getting the GH_PAT:**
 
-The dashboard reads your repo's files via the GitHub API, and it needs a token to do that.
+The dashboard uses this token to read your briefing files AND to trigger workflow runs (Generate button). It needs two scopes for both to work.
 
 1. Go to [github.com/settings/tokens/new](https://github.com/settings/tokens/new)
-2. Give it any name, set expiry to an amount of days, check the **`repo`** scope (top-level checkbox)
-3. Click **Generate token** — copy it immediately, you won't see it again <-- you will also need this to log-in to the dashboard! (Only need to input it once per device, saved in cookies. You'll also be able to view it later after finishing step 4 directly underneath if you lose it somehow -- or just make a new one)
-4. Add it as the `GH_PAT` secret
+2. Give it any name, set expiry to an amount of days
+3. Check **two scopes**: **`repo`** (top-level checkbox) and **`workflow`**
+4. Click **Generate token** — copy it immediately, you won't see it again <-- you will also need this to log-in to the dashboard! (Only need to input it once per device, saved in cookies. You'll also be able to view it later after finishing step 5 directly underneath if you lose it somehow -- or just make a new one)
+5. Add it as the `GH_PAT` secret
 
 ---
 
@@ -231,8 +232,8 @@ These cookies expire after roughly 30 days. When Twitter accounts stop appearing
 **The briefing runs but the articles seem off-topic**
 → `core_focus` and `tier_1` in `report_profile.yaml` are too vague. Name specific institutions, geographies, or datasets. Also make sure your feeds actually cover your topic.
 
-**Dashboard says "Token rejected"**
-→ The GH_PAT has expired or doesn't have `repo` scope. Generate a new one (Step 6).
+**Dashboard says "Token rejected" or Generate button gives a permissions error**
+→ The GH_PAT has expired or is missing a scope. It needs both `repo` AND `workflow` checked. Generate a new one (Step 6).
 
 **Dashboard says "Failed to load sources" or shows nothing**
 → The dashboard auto-detects your username and repo from the GitHub Pages URL, so this usually means you're not on the Pages URL yet (e.g. you opened `index.html` as a local file). Open the dashboard via `https://YOUR-USERNAME.github.io/Consult-Workshop` instead. If that still fails, check that GitHub Pages is deployed (Actions tab → Deploy Dashboard run should be green).
