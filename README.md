@@ -121,7 +121,7 @@ The dashboard reads your repo's files via the GitHub API, and it needs a token t
 
 1. Go to [github.com/settings/tokens/new](https://github.com/settings/tokens/new)
 2. Give it any name, set expiry to an amount of days, check the **`repo`** scope (top-level checkbox)
-3. Click **Generate token** — copy it immediately, you won't see it again <-- temporarily put it in a notepad or something just in case
+3. Click **Generate token** — copy it immediately, you won't see it again <-- you will also need this to log-in to the dashboard! (Only need to input it once per device, saved in cookies. You'll also be able to view it later after finishing step 4 directly underneath if you lose it somehow -- or just make a new one)
 4. Add it as the `GH_PAT` secret
 
 ---
