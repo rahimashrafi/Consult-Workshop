@@ -648,25 +648,33 @@ function b64encode(str) {
 
 // ── GitHub API ───────────────────────────────────────────────────────────────
 
+function ghHeaders(extraHeaders = {}, token = state.pat) {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    ...extraHeaders,
+  };
+}
+
+async function ghErrorMessage(response, fallback = `HTTP ${response.status}`) {
+  const body = await response.json().catch(() => ({}));
+  return body.message || fallback;
+}
+
 async function ghFetch(path, opts = {}) {
   const url = path.startsWith('https://') ? path
     : `https://api.github.com/repos/${OWNER}/${REPO}/${path}`;
   return fetch(url, {
     ...opts,
-    headers: {
-      Authorization: `token ${state.pat}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      ...(opts.headers || {}),
-    },
+    headers: ghHeaders(opts.headers || {}),
   });
 }
 
 async function ghGet(path) {
   const r = await ghFetch(path);
   if (!r.ok) {
-    const body = await r.json().catch(() => ({}));
-    throw new Error(body.message || `HTTP ${r.status}`);
+    throw new Error(await ghErrorMessage(r));
   }
   return r.json();
 }
@@ -725,10 +733,19 @@ async function saveToken() {
   btn.textContent = 'Checking…';
 
   try {
-    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {
-      headers: { Authorization: `token ${pat}`, Accept: 'application/vnd.github+json' },
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${DAILY_WORKFLOW_FILE}/dispatches`, {
+      method: 'POST',
+      headers: ghHeaders({ 'Content-Type': 'application/json' }, pat),
+      body: JSON.stringify({ ref: '__dashboard_pat_validation__' }),
     });
-    if (!r.ok) throw new Error('Token rejected or no access to repo.');
+
+    if (r.status !== 422) {
+      const message = await ghErrorMessage(r, 'Token rejected or missing Actions permission.');
+      throw new Error(
+        `${message} Use a fine-grained token for this repo with Actions, Contents, and Variables set to Read and write.`
+      );
+    }
+
     state.pat = pat;
     localStorage.setItem('gh_pat', pat);
     showApp();
