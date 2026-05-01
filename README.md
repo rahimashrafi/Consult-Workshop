@@ -126,7 +126,7 @@ The dashboard uses this token to read your briefing files, trigger the Generate 
    - **Contents** → **Read and write** *(reads briefings; lets you add/remove sources from the dashboard)*
    - **Actions** → **Read and write** *(triggers the Generate runs; checks run status)*
    - **Variables** → **Read and write** *(saves your default model choice)*
-5. Click **Generate token** — copy it immediately, you won't see it again. You'll also need it to log in to the dashboard in Step 9, so keep it somewhere handy for now (notes app is fine, you'll paste it twice)
+5. Click **Generate token** — copy it immediately, you won't see it again. You'll also need it to log in to the dashboard in Step 9 or when trying to look at the dashboard from other devices. You won't see it again so store it safely.
 6. Add it as the `GH_PAT` secret
 
 ---
