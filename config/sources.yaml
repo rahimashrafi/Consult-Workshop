@@ -43,6 +43,11 @@ rss_feeds:
     category: tech_news
     language: en
 
+  - name: The Batch — DeepLearning.ai (Andrew Ng)
+    url: https://www.deeplearning.ai/the-batch/feed.xml
+    category: ai_newsletter
+    language: en
+
   # ── AI policy / governance ───────────────────────────────────────────────────
 
   - name: OECD AI Policy Observatory
@@ -50,15 +55,32 @@ rss_feeds:
     category: ai_policy
     language: en
 
-  - name: Euractiv Technology
-    url: https://www.euractiv.com/sections/tech/feed
+  - name: Politico EU — Tech & AI
+    url: https://www.politico.eu/tag/artificial-intelligence/feed/
     category: eu_policy
+    language: en
+
+  - name: AI Snake Oil (Narayanan & Kapoor)
+    url: https://aisnakeoil.substack.com/feed
+    category: ai_newsletter
+    language: en
+
+  # ── European tech & startups ─────────────────────────────────────────────────
+
+  - name: Sifted
+    url: https://sifted.eu/feed
+    category: eu_startup_vc
+    language: en
+
+  - name: Tech.eu
+    url: https://tech.eu/feed/
+    category: eu_startup_vc
     language: en
 
   # ── AI newsletters ───────────────────────────────────────────────────────────
 
-  - name: Import AI (Jack Clark)
-    url: https://importai.substack.com/feed
+  - name: Exponential View (Azeem Azhar)
+    url: https://www.exponentialview.co/feed
     category: ai_newsletter
     language: en
 
@@ -110,9 +132,29 @@ serendipity_sources:
     category: ai_industry
     language: en
 
+  - name: The Decoder
+    url: https://the-decoder.com/feed/
+    category: ai_industry
+    language: en
+
   - name: Stanford HAI
     url: https://hai.stanford.edu/news/rss.xml
     category: ai_research
+    language: en
+
+  - name: Oxford Internet Institute
+    url: https://www.oii.ox.ac.uk/feed/
+    category: ai_research
+    language: en
+
+  - name: Ada Lovelace Institute
+    url: https://www.adalovelaceinstitute.org/feed/
+    category: ai_policy
+    language: en
+
+  - name: Centre for the Governance of AI (GovAI)
+    url: https://www.governance.ai/post/rss.xml
+    category: ai_policy
     language: en
 
   - name: AI Now Institute
@@ -127,6 +169,16 @@ serendipity_sources:
 
   - name: Brookings — AI Research
     url: https://www.brookings.edu/topic/artificial-intelligence/feed/
+    category: ai_policy
+    language: en
+
+  - name: EFF Deeplinks
+    url: https://www.eff.org/rss/updates.xml
+    category: digital_rights
+    language: en
+
+  - name: CSET (Center for Security and Emerging Technology)
+    url: https://cset.georgetown.edu/feed/
     category: ai_policy
     language: en
 
