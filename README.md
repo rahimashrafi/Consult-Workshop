@@ -89,17 +89,17 @@ The RSSHub URL itself comes from a secret you'll add in Step 6 — no need to pu
 
 ---
 
-### Step 5 — Point the dashboard at your fork
+### Step 5 — Name your dashboard (optional)
 
-Open `web/config.js` and change three lines:
+The dashboard auto-detects your GitHub username and repo name from the Pages URL — you don't need to touch those. The only thing worth changing is the title:
+
+Open `web/config.js` and edit this one line:
 
 ```javascript
-const OWNER           = 'your-github-username';  // your GitHub username
-const REPO            = 'Consult-Workshop';        // your repo name (if you renamed the fork, update this!!!!!)
-const DASHBOARD_TITLE = 'My Briefing Dashboard';  // whatever you want to call it
+const DASHBOARD_TITLE = 'My Briefing Dashboard';  // call it whatever you want
 ```
 
-Commit.
+Commit if you changed it, skip this step entirely if you don't care about the title.
 
 ---
 
@@ -235,7 +235,7 @@ These cookies expire after roughly 30 days. When Twitter accounts stop appearing
 → The GH_PAT has expired or doesn't have `repo` scope. Generate a new one (Step 6).
 
 **Dashboard says "Failed to load sources" or shows nothing**
-→ `OWNER` or `REPO` in `web/config.js` doesn't match your actual username or repo name. GitHub usernames are case-sensitive.
+→ The dashboard auto-detects your username and repo from the GitHub Pages URL, so this usually means you're not on the Pages URL yet (e.g. you opened `index.html` as a local file). Open the dashboard via `https://YOUR-USERNAME.github.io/Consult-Workshop` instead. If that still fails, check that GitHub Pages is deployed (Actions tab → Deploy Dashboard run should be green).
 
 **Dashboard gives a 404**
 → Go to Settings → Pages and confirm the source is set to **GitHub Actions** (not a branch). Check the Actions tab for a Deploy run.

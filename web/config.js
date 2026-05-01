@@ -1,14 +1,23 @@
 // =============================================================================
 // DASHBOARD CONFIGURATION
-// Edit these values after forking. Everything else is automatic.
 //
-// OWNER           : your GitHub username (e.g. 'jsmith')
-// REPO            : the name of your forked repository
-// DASHBOARD_TITLE : shown in the browser tab and page header
+// OWNER and REPO are auto-detected from your GitHub Pages URL
+// (https://your-username.github.io/Consult-Workshop) — you don't need to
+// change them. If you're running the dashboard locally, fill them in manually.
+//
+// DASHBOARD_TITLE : shown in the browser tab and page header — change freely.
 // =============================================================================
 
-const OWNER           = 'your-github-username';
-const REPO            = 'Consult-Workshop';
+let OWNER = 'your-github-username';  // fallback for local dev
+let REPO  = 'Consult-Workshop';       // fallback for local dev
+
+// Auto-detect from GitHub Pages URL
+if (window.location.hostname.endsWith('.github.io')) {
+  OWNER = window.location.hostname.replace('.github.io', '');
+  const _parts = window.location.pathname.split('/').filter(Boolean);
+  if (_parts.length) REPO = _parts[0];
+}
+
 const DASHBOARD_TITLE = 'My Briefing Dashboard';
 
 // =============================================================================
