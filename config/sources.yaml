@@ -107,13 +107,28 @@ rss_feeds:
 
 social:
   twitter_accounts:
-    # Format: handle (without the @), a display name, and a short note on why.
-    #
-    # - handle: ylecun
-    #   name: Yann LeCun
-    #   relevance_hint: AI research, open-source AI debates
-    #
-    # Add your accounts here:
+    # These are just examples — swap them out for people relevant to your topic.
+    - handle: ylecun
+      name: Yann LeCun
+      relevance_hint: AI research, Meta, open-source AI debates
+    - handle: AndrewYNg
+      name: Andrew Ng
+      relevance_hint: AI industry, education, startup ecosystem
+    - handle: sama
+      name: Sam Altman
+      relevance_hint: AI industry, OpenAI, regulation views
+    - handle: GaryMarcus
+      name: Gary Marcus
+      relevance_hint: AI critique, policy, safety
+    - handle: Thom_Wolf
+      name: Thomas Wolf
+      relevance_hint: Co-founder Hugging Face, open-source AI
+    - handle: arthurmensch
+      name: Arthur Mensch
+      relevance_hint: CEO Mistral AI, open-source LLMs, European AI
+    - handle: BenediktEvans
+      name: Benedict Evans
+      relevance_hint: Tech industry analysis, AI impact on business
 
 
 # =============================================================================
