@@ -1,0 +1,57 @@
+name: Weekly Round-up
+
+on:
+  schedule:
+    # Sunday at 05:00 UTC = 06:00 CET / 07:00 CEST (1 hour after the daily briefing)
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'OpenRouter model ID (leave blank to use repo default)'
+        required: false
+        default: ''
+
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run weekly round-up
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ github.event.inputs.model || vars.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4-6' }}
+          BRIEFINGS_DIR: briefings
+          ROUNDUPS_DIR: roundups
+        run: python -m src.briefing.weekly
+
+      - name: Commit round-up to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p roundups
+          git add roundups/
+          git diff --staged --quiet || git commit -m "roundup: week $(date +%Y-W%V)"
+          git push
+
+      - name: Upload round-up as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: roundup-${{ github.run_id }}
+          path: roundups/roundup_*.md
+          retention-days: 365

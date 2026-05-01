@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Briefing Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --border: #d0d7de;
+      --text: #1f2328;
+      --muted: #656d76;
+      --accent: #0969da;
+      --accent-hover: #0550ae;
+      --good: #1a7f37;
+      --good-bg: #dafbe1;
+      --bad: #cf222e;
+      --bad-bg: #ffebe9;
+      --radius: 6px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    /* ── Auth ────────────────────────────────────────────── */
+
+    #auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 480px;
+      width: 100%;
+    }
+
+    .auth-card h1 { font-size: 20px; margin-bottom: 6px; }
+    .auth-card .subtitle { color: var(--muted); margin-bottom: 24px; }
+
+    .auth-steps {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .auth-steps ol { padding-left: 18px; }
+    .auth-steps li { margin-bottom: 4px; }
+    .auth-steps code {
+      background: #ebebeb;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    /* ── App chrome ──────────────────────────────────────── */
+
+    #app-screen { display: none; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 { font-size: 15px; font-weight: 600; flex: 1; }
+
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--muted);
+      cursor: pointer;
+      margin-bottom: -1px;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    main {
+      padding: 24px;
+      max-width: 1340px;
+      margin: 0 auto;
+    }
+
+    /* ── Common ──────────────────────────────────────────── */
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .card-header .count { color: var(--muted); font-weight: 400; }
+
+    .empty, .loading {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text);
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--bg); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-green { background: var(--good); color: #fff; border-color: transparent; }
+    .btn-green:hover { background: var(--good); filter: brightness(1.1); }
+
+    input[type="text"], input[type="url"], input[type="password"] {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      font-size: 14px;
+      width: 100%;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+    }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(9,105,218,.15); }
+
+    .row { display: flex; gap: 8px; margin-bottom: 8px; }
+
+    .error-msg { color: var(--bad); font-size: 13px; margin-top: 8px; }
+
+    /* ── Briefings ───────────────────────────────────────── */
+
+    .briefing-row {
+      display: flex;
+      align-items: center;
+      padding: 11px 16px;
+    }
+    .briefing-row ~ .briefing-row { border-top: 1px solid var(--border); }
+    .briefing-inline-viewer + .briefing-row { border-top: 1px solid var(--border); }
+    .briefing-date { flex: 1; font-weight: 500; }
+
+    .briefing-inline-viewer {
+      padding: 20px 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .briefing-inline-viewer h1 { font-size: 18px; margin: 18px 0 6px; }
+    .briefing-inline-viewer h2 { font-size: 15px; margin: 16px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .briefing-inline-viewer h3 { font-size: 13px; font-weight: 600; margin: 14px 0 4px; }
+    .briefing-inline-viewer p { margin-bottom: 10px; }
+    .briefing-inline-viewer ul, .briefing-inline-viewer ol { padding-left: 20px; margin-bottom: 10px; }
+    .briefing-inline-viewer li { margin-bottom: 3px; }
+    .briefing-inline-viewer a { color: var(--accent); }
+    .briefing-inline-viewer hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+    .briefing-inline-viewer code { background: var(--bg); padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+    .briefing-inline-viewer blockquote { border-left: 3px solid var(--border); padding-left: 12px; color: var(--muted); margin: 10px 0; }
+
+    /* ── Briefing rows ───────────────────────────────────── */
+
+    .briefing-row {
+      display: flex;
+      align-items: center;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background-color .15s ease;
+    }
+    .briefing-row:last-child { border-bottom: none; }
+    .briefing-row.is-active { background: #eef6ff; }
+    .briefing-date { flex: 1; font-weight: 500; }
+
+    /* ── Two-column briefings layout ─────────────────────── */
+
+    .briefings-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .briefings-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .col-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .col-toolbar-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .col-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .col-run-status {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .col-progress {
+      height: 2px;
+      background: transparent;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .col-progress.active { background: var(--border); }
+    .col-progress-bar {
+      display: none;
+      height: 100%;
+      width: 40%;
+      background: var(--accent);
+      animation: progress-slide 1.6s ease-in-out infinite;
+    }
+    .col-progress.active .col-progress-bar { display: block; }
+    @keyframes progress-slide {
+      0%   { margin-left: -40%; }
+      100% { margin-left: 100%; }
+    }
+
+    /* ── Model picker ───────────────────────────────────── */
+
+    .model-picker {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .model-select {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px 8px;
+      font-size: 13px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      max-width: 220px;
+    }
+    .model-cost {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── Sources ─────────────────────────────────────────── */
+
+    .source-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .source-row:last-child { border-bottom: none; }
+
+    .source-info { flex: 1; min-width: 0; }
+    .source-name { font-weight: 500; }
+    .source-url {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px 6px;
+      cursor: pointer;
+      border-radius: var(--radius);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+    .delete-btn:hover { color: var(--bad); opacity: 1; background: var(--bad-bg); }
+
+    .add-source-panel {
+      padding: 16px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+    .add-source-panel .label {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .add-source-panel .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .add-source-panel code { font-size: 11px; background: #e5e7ea; padding: 1px 4px; border-radius: 3px; }
+    .direct-add-toggle {
+      background: none; border: none; padding: 0;
+      color: var(--muted); font-size: 12px; cursor: pointer; text-decoration: underline;
+    }
+    .direct-add-toggle:hover { color: var(--text); }
+    .direct-add-panel { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .direct-row { margin-bottom: 6px; }
+    .direct-row .remove-row-btn {
+      background: none; border: none;
+      color: var(--muted); font-size: 16px; line-height: 1;
+      padding: 2px 5px; cursor: pointer; border-radius: var(--radius); flex-shrink: 0;
+    }
+    .direct-row .remove-row-btn:hover { color: var(--bad); background: var(--bad-bg); }
+    .add-row-btn {
+      background: none;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .add-row-btn:hover { border-color: var(--text); color: var(--text); background: var(--bg); }
+
+    /* ── Toast ───────────────────────────────────────────── */
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: #fff;
+      background: var(--text);
+      z-index: 999;
+      animation: slide-up .15s ease;
+      max-width: 320px;
+    }
+    .toast.error { background: var(--bad); }
+    @keyframes slide-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 860px) {
+      main { padding: 16px; }
+      header, nav { padding: 0 16px; }
+      .briefing-inline-viewer { padding: 18px 12px; }
+      .row { flex-direction: column; }
+      .briefings-two-col { grid-template-columns: 1fr; }
+      .model-select { max-width: 150px; }
+      .model-cost { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth ──────────────────────────────────────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <h1 id="auth-title">Briefing Dashboard</h1>
+    <p class="subtitle">Enter the access token to continue.</p>
+    <div class="auth-steps">
+      Paste the access token you received. It will be stored only in this browser — you won't need to enter it again.
+    </div>
+    <div class="row">
+      <input type="password" id="pat-input" placeholder="Paste token here…" />
+      <button class="btn btn-primary" id="auth-btn" onclick="saveToken()">Save</button>
+    </div>
+    <p class="error-msg" id="auth-error"></p>
+  </div>
+</div>
+
+<!-- ── App ───────────────────────────────────────────────────────────────── -->
+<div id="app-screen">
+  <header>
+    <h1 id="app-title">Briefing Dashboard</h1>
+    <button class="btn" onclick="logout()" style="font-size:12px;color:var(--muted)">Sign out</button>
+  </header>
+
+  <nav>
+    <button class="tab-btn active" id="tab-briefings" onclick="switchTab('briefings')">Briefings</button>
+    <button class="tab-btn"        id="tab-sources"   onclick="switchTab('sources')">Sources</button>
+  </nav>
+
+  <main>
+    <div id="pane-briefings">
+      <!-- Shared model controls -->
+      <div class="briefings-controls">
+        <div class="model-picker">
+          <select id="model-select" class="model-select" onchange="updateModelCost(); updateSaveDefaultBtn()"></select>
+          <button class="btn" id="save-default-btn" onclick="saveDefaultModel()" title="Save as default for all future runs, including scheduled ones">Save as default</button>
+          <span id="model-cost" class="model-cost"></span>
+        </div>
+      </div>
+
+      <!-- Two-column layout -->
+      <div class="briefings-two-col">
+
+        <!-- Left: Daily briefings -->
+        <div>
+          <div class="col-toolbar">
+            <span class="col-toolbar-title">Daily briefings</span>
+            <div class="col-toolbar-right">
+              <span id="daily-run-status" class="col-run-status"></span>
+              <button class="btn btn-green" id="daily-run-btn" onclick="triggerDailyRun()">&#9654; Generate</button>
+            </div>
+          </div>
+          <div id="daily-run-progress" class="col-progress"><div class="col-progress-bar"></div></div>
+          <div class="card" id="briefings-list">
+            <div class="loading">Loading briefings…</div>
+          </div>
+          <div id="briefing-viewer" class="content-viewer"></div>
+        </div>
+
+        <!-- Right: Weekly round-ups -->
+        <div>
+          <div class="col-toolbar">
+            <span class="col-toolbar-title">Weekly round-ups</span>
+            <div class="col-toolbar-right">
+              <span id="weekly-run-status" class="col-run-status"></span>
+              <button class="btn btn-green" id="weekly-run-btn" onclick="triggerWeeklyRun()">&#9654; Generate</button>
+            </div>
+          </div>
+          <div id="weekly-run-progress" class="col-progress"><div class="col-progress-bar"></div></div>
+          <div class="card" id="roundups-list">
+            <div class="loading">Loading round-ups…</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="pane-sources" style="display:none">
+      <div class="card" id="social-sources-list" style="margin-bottom:16px">
+        <div class="loading">Loading sources…</div>
+      </div>
+      <div class="card" id="sources-list">
+        <div class="loading">Loading sources…</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Dashboard config — students edit this file to personalise their fork -->
+<script src="config.js"></script>
+
+<!-- CDN libs -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+
+<script>
+'use strict';
+
+// ── Config (OWNER, REPO, DASHBOARD_TITLE, MODELS loaded from config.js) ──────
+
+const DAILY_WORKFLOW_FILE      = 'daily_briefing.yml';
+const WEEKLY_WORKFLOW_FILE     = 'weekly_roundup.yml';
+const ADD_SOURCE_WORKFLOW_FILE = 'add-source.yml';
+const SOURCES_PATH        = 'config/sources.yaml';
+const BRIEFINGS_DIR       = 'briefings';
+const ROUNDUPS_DIR        = 'roundups';
+const DEFAULT_BRANCH      = 'main';
+
+// Apply dashboard title from config.js
+document.title = DASHBOARD_TITLE;
+document.getElementById('page-title').textContent  = DASHBOARD_TITLE;
+document.getElementById('auth-title').textContent  = DASHBOARD_TITLE;
+document.getElementById('app-title').textContent   = DASHBOARD_TITLE;
+
+const EST_IN_K  = 15;
+const EST_OUT_K = 1.5;
+
+function estimateCost(m) {
+  const c = (m.costIn * EST_IN_K + m.costOut * EST_OUT_K) / 1000;
+  return c < 0.005 ? '<$0.01' : `~$${c.toFixed(2)}`;
+}
+
+let _currentDefaultModel = null;
+
+function initModelSelect() {
+  const sel = document.getElementById('model-select');
+  sel.innerHTML = '';
+  MODELS.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = `${m.label}  (${estimateCost(m)}/run)`;
+    if (m.isDefault) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  updateModelCost();
+  loadDefaultModel();
+}
+
+function updateModelCost() {
+  const sel = document.getElementById('model-select');
+  const m = MODELS.find(m => m.id === sel.value);
+  document.getElementById('model-cost').textContent = m ? `est. ${estimateCost(m)}/run` : '';
+}
+
+function updateSaveDefaultBtn() {
+  const btn = document.getElementById('save-default-btn');
+  const sel = document.getElementById('model-select');
+  if (!btn) return;
+  const isSaved = sel.value === _currentDefaultModel;
+  btn.disabled = isSaved;
+  btn.textContent = isSaved ? 'Default ✓' : 'Save as default';
+}
+
+async function loadDefaultModel() {
+  try {
+    const data = await ghGet('actions/variables/OPENROUTER_MODEL');
+    _currentDefaultModel = data.value;
+    const sel = document.getElementById('model-select');
+    if ([...sel.options].some(o => o.value === _currentDefaultModel)) {
+      sel.value = _currentDefaultModel;
+    } else if (_currentDefaultModel) {
+      const opt = document.createElement('option');
+      opt.value = _currentDefaultModel;
+      opt.textContent = _currentDefaultModel;
+      sel.insertBefore(opt, sel.firstChild);
+      sel.value = _currentDefaultModel;
+    }
+    updateModelCost();
+    updateSaveDefaultBtn();
+  } catch {
+    updateSaveDefaultBtn();
+  }
+}
+
+async function saveDefaultModel() {
+  const btn = document.getElementById('save-default-btn');
+  const model = document.getElementById('model-select').value;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    let r = await ghFetch('actions/variables/OPENROUTER_MODEL', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'OPENROUTER_MODEL', value: model }),
+    });
+    if (r.status === 404) {
+      r = await ghFetch('actions/variables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'OPENROUTER_MODEL', value: model }),
+      });
+    }
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body.message || `HTTP ${r.status}`);
+    }
+    _currentDefaultModel = model;
+    updateSaveDefaultBtn();
+    toast('Default model saved — scheduled runs will use this model.');
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Save as default';
+    toast(`Could not save default: ${e.message}`, true);
+  }
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+
+let _dailyDispatchedAt = null;
+let _dailyPollTimer = null;
+let _dailyPollStartedAt = null;
+let _weeklyDispatchedAt = null;
+let _weeklyPollTimer = null;
+let _weeklyPollStartedAt = null;
+let _sourceDiscoveryDispatchedAt = null;
+let _sourceDiscoveryPollTimer = null;
+
+const state = {
+  pat: localStorage.getItem('gh_pat') || '',
+  sources: [],
+  socialSources: [],
+};
+
+// ── Encoding helpers ─────────────────────────────────────────────────────────
+
+function b64decode(str) {
+  const binary = atob(str.replace(/\s/g, ''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+function b64encode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
+// ── GitHub API ───────────────────────────────────────────────────────────────
+
+async function ghFetch(path, opts = {}) {
+  const url = path.startsWith('https://') ? path
+    : `https://api.github.com/repos/${OWNER}/${REPO}/${path}`;
+  return fetch(url, {
+    ...opts,
+    headers: {
+      Authorization: `token ${state.pat}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(opts.headers || {}),
+    },
+  });
+}
+
+async function ghGet(path) {
+  const r = await ghFetch(path);
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}));
+    throw new Error(body.message || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+function formatRunStepStatus(stepName, runStatus) {
+  if (runStatus === 'queued') return 'Queued…';
+  if (!stepName) return 'In progress…';
+
+  const labels = {
+    'Checkout repository': 'Checking out repository…',
+    'Set up Python': 'Setting up Python…',
+    'Install dependencies': 'Installing Python dependencies…',
+    'Run briefing': 'Retrieving news, scoring articles, and summarising results…',
+    'Commit briefing to repository': 'Saving briefing to repository…',
+    'Upload briefing as workflow artifact': 'Uploading briefing artifact…',
+    'Run weekly round-up': 'Reading saved briefings and summarising the week…',
+    'Commit round-up to repository': 'Saving round-up to repository…',
+    'Upload round-up as workflow artifact': 'Uploading round-up artifact…',
+  };
+
+  return labels[stepName] || `Working: ${stepName}…`;
+}
+
+async function getRunProgressStatus(run) {
+  if (!run) return 'Queued…';
+  if (run.status === 'queued') return 'Queued…';
+
+  try {
+    const data = await ghGet(`actions/runs/${run.id}/jobs?per_page=20`);
+    const jobs = data.jobs || [];
+    const activeJob = jobs.find(job => job.status !== 'completed') || jobs[0];
+    const steps = activeJob?.steps || [];
+    const activeStep = steps.find(step => step.status === 'in_progress')
+      || steps.find(step => step.status === 'queued')
+      || steps.filter(step => step.conclusion === 'success').at(-1);
+    return formatRunStepStatus(activeStep?.name, run.status);
+  } catch {
+    return run.status === 'queued' ? 'Queued…' : 'In progress…';
+  }
+}
+
+async function updateRunStatus(col, run) {
+  document.getElementById(`${col}-run-status`).textContent = await getRunProgressStatus(run);
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+async function saveToken() {
+  const pat = document.getElementById('pat-input').value.trim();
+  const errEl = document.getElementById('auth-error');
+  const btn   = document.getElementById('auth-btn');
+  if (!pat) return;
+
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+
+  try {
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {
+      headers: { Authorization: `token ${pat}`, Accept: 'application/vnd.github+json' },
+    });
+    if (!r.ok) throw new Error('Token rejected or no access to repo.');
+    state.pat = pat;
+    localStorage.setItem('gh_pat', pat);
+    showApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('gh_pat');
+  state.pat = '';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ── App init ─────────────────────────────────────────────────────────────────
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  initModelSelect();
+  Promise.all([loadBriefings(), loadRoundups()]);
+  checkActiveRun();
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  ['briefings', 'sources'].forEach(t => {
+    document.getElementById(`pane-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'sources' && state.sources.length === 0) loadSources();
+}
+
+// ── Briefings ────────────────────────────────────────────────────────────────
+
+async function loadBriefings() {
+  const el = document.getElementById('briefings-list');
+  try {
+    const { tree } = await ghGet(`git/trees/${DEFAULT_BRANCH}?recursive=1`);
+    const mds = tree
+      .filter(f => f.type === 'blob' && f.path.startsWith(BRIEFINGS_DIR + '/') && f.path.endsWith('.md'))
+      .sort((a, b) => b.path.localeCompare(a.path));
+
+    if (!mds.length) {
+      el.innerHTML = '<div class="empty">No briefings yet — run the pipeline first.</div>';
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="card-header">
+        <span>Past briefings</span>
+        <span class="count">${mds.length} available</span>
+      </div>
+      ${mds.map(f => {
+        const name = f.path.split('/').pop();
+        return `
+          <div class="briefing-row">
+            <span class="briefing-date">${fmtDate(name)}</span>
+            <button class="btn" data-path="${esc(f.path)}" data-name="${esc(name)}">Read</button>
+          </div>
+          <div class="briefing-inline-viewer" style="display:none"></div>
+        `;
+      }).join('')}
+    `;
+
+    el.onclick = e => {
+      const btn = e.target.closest('[data-path]');
+      if (!btn) return;
+      const row = btn.closest('.briefing-row');
+      const viewer = row.nextElementSibling;
+      if (viewer.style.display !== 'none') {
+        viewer.style.display = 'none';
+        viewer.innerHTML = '';
+        row.classList.remove('is-active');
+        btn.textContent = 'Read';
+        return;
+      }
+      el.querySelectorAll('.briefing-inline-viewer').forEach(v => { v.style.display = 'none'; v.innerHTML = ''; });
+      el.querySelectorAll('.briefing-row').forEach(r => r.classList.remove('is-active'));
+      el.querySelectorAll('.briefing-row [data-path]').forEach(b => { if (b !== btn) b.textContent = 'Read'; });
+      row.classList.add('is-active');
+      openBriefing(btn.dataset.path, btn.dataset.name, viewer, btn);
+    };
+  } catch {
+    el.innerHTML = `
+      <div class="empty">
+        Briefings folder not found yet.<br>
+        <small>It will be created automatically after the first pipeline run.</small>
+      </div>`;
+  }
+}
+
+async function openBriefing(path, name, viewer, btn) {
+  const row = btn.closest('.briefing-row');
+  viewer.style.display = 'block';
+  viewer.innerHTML = '<div class="loading">Loading…</div>';
+  btn.textContent = 'Close';
+  viewer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    const data = await ghGet(`contents/${path}`);
+    const md = b64decode(data.content);
+    viewer.innerHTML = `<div class="briefing-body">${marked.parse(md)}</div>`;
+  } catch (e) {
+    viewer.innerHTML = `<div class="empty">Failed to load: ${esc(e.message)}</div>`;
+    row.classList.remove('is-active');
+    btn.textContent = 'Read';
+  }
+}
+
+function fmtDate(filename) {
+  const m = filename.match(/(\d{4})-(\d{2})-(\d{2})(?:_(\d{2})(\d{2}))?/);
+  if (!m) return filename;
+  const date = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]))
+    .toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return m[4] ? `${date} — ${m[4]}:${m[5]}` : date;
+}
+
+// ── Round-ups ────────────────────────────────────────────────────────────────
+
+async function loadRoundups() {
+  const el = document.getElementById('roundups-list');
+  try {
+    const { tree } = await ghGet(`git/trees/${DEFAULT_BRANCH}?recursive=1`);
+    const mds = tree
+      .filter(f => f.type === 'blob' && f.path.startsWith(ROUNDUPS_DIR + '/') && f.path.endsWith('.md'))
+      .sort((a, b) => b.path.localeCompare(a.path));
+
+    if (!mds.length) {
+      el.innerHTML = '<div class="empty">No round-ups yet — runs automatically on Sunday.</div>';
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="card-header">
+        <span>Past round-ups</span>
+        <span class="count">${mds.length} available</span>
+      </div>
+      ${mds.map(f => {
+        const name = f.path.split('/').pop();
+        return `
+          <div class="briefing-row">
+            <span class="briefing-date">${fmtRoundup(name)}</span>
+            <button class="btn" data-roundup-path="${esc(f.path)}" data-roundup-name="${esc(name)}">Read</button>
+          </div>
+          <div class="briefing-inline-viewer" style="display:none"></div>
+        `;
+      }).join('')}
+    `;
+
+    el.onclick = e => {
+      const btn = e.target.closest('[data-roundup-path]');
+      if (!btn) return;
+
+      const row = btn.closest('.briefing-row');
+      const viewer = row.nextElementSibling;
+      const isSameOpen = viewer.style.display !== 'none';
+
+      el.querySelectorAll('.briefing-inline-viewer').forEach(v => { v.style.display = 'none'; v.innerHTML = ''; });
+      el.querySelectorAll('.briefing-row').forEach(r => r.classList.remove('is-active'));
+      el.querySelectorAll('[data-roundup-path]').forEach(b => { b.textContent = 'Read'; });
+
+      if (isSameOpen) {
+        return;
+      }
+
+      row.classList.add('is-active');
+      btn.textContent = 'Close';
+      openRoundup(btn.dataset.roundupPath, btn.dataset.roundupName, viewer, btn);
+    };
+  } catch {
+    el.innerHTML = `
+      <div class="empty">
+        Round-ups folder not found yet.<br>
+        <small>It will be created after the first weekly run.</small>
+      </div>`;
+  }
+}
+
+async function openRoundup(path, name, viewer, btn) {
+  const row = btn.closest('.briefing-row');
+  viewer.style.display = 'block';
+  viewer.innerHTML = '<div class="loading">Loading…</div>';
+  viewer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    const data = await ghGet(`contents/${path}`);
+    const md = b64decode(data.content);
+    viewer.innerHTML = `<div class="briefing-body">${marked.parse(md)}</div>`;
+  } catch (e) {
+    viewer.innerHTML = `<div class="empty">Failed to load: ${esc(e.message)}</div>`;
+    row.classList.remove('is-active');
+    btn.textContent = 'Read';
+  }
+}
+
+function fmtRoundup(filename) {
+  // roundup_2026-04-27_2030.md → "27 April 2026 — 20:30"
+  const dated = filename.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})/);
+  if (dated) {
+    const date = new Date(Date.UTC(+dated[1], +dated[2] - 1, +dated[3]))
+      .toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    return `${date} — ${dated[4]}:${dated[5]}`;
+  }
+
+  // Backward compatibility: roundup_2026-W17.md → "Week 17, 2026"
+  const weekly = filename.match(/(\d{4})-W(\d{2})/);
+  if (!weekly) return filename.replace(/\.md$/, '');
+  return `Week ${+weekly[2]}, ${weekly[1]}`;
+}
+
+// ── Daily run trigger ────────────────────────────────────────────────────────
+
+async function triggerDailyRun() {
+  const btn = document.getElementById('daily-run-btn');
+  btn.disabled = true;
+  btn.textContent = 'Starting…';
+
+  try {
+    const before = new Date();
+    before.setSeconds(before.getSeconds() - 10);
+    _dailyDispatchedAt = before.toISOString();
+
+    const model = document.getElementById('model-select').value;
+    const r = await ghFetch(`actions/workflows/${DAILY_WORKFLOW_FILE}/dispatches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main', inputs: { model } }),
+    });
+    if (r.status === 204) {
+      btn.textContent = 'Running…';
+      showColProgress('daily');
+      document.getElementById('daily-run-status').textContent = 'Queued…';
+      _dailyPollTimer = setTimeout(pollDailyStatus, 8000);
+    } else {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body.message || `HTTP ${r.status}`);
+    }
+  } catch (e) {
+    toast(e.message, true);
+    btn.disabled = false;
+    btn.textContent = '▶ Generate';
+  }
+}
+
+function showColProgress(col) {
+  if (col === 'daily') {
+    _dailyPollStartedAt = Date.now();
+  } else {
+    _weeklyPollStartedAt = Date.now();
+  }
+  document.getElementById(`${col}-run-progress`).classList.add('active');
+}
+
+function hideColProgress(col, statusText) {
+  if (col === 'daily') {
+    clearTimeout(_dailyPollTimer);
+    _dailyPollTimer = null;
+    _dailyPollStartedAt = null;
+  } else {
+    clearTimeout(_weeklyPollTimer);
+    _weeklyPollTimer = null;
+    _weeklyPollStartedAt = null;
+  }
+
+  document.getElementById(`${col}-run-progress`).classList.remove('active');
+  const btn = document.getElementById(`${col}-run-btn`);
+  btn.disabled = false;
+  btn.textContent = '▶ Generate';
+
+  const statusEl = document.getElementById(`${col}-run-status`);
+  statusEl.textContent = statusText || '';
+  if (statusText) {
+    setTimeout(() => {
+      if (statusEl.textContent === statusText) statusEl.textContent = '';
+    }, 6000);
+  }
+}
+
+// ── Weekly run trigger ───────────────────────────────────────────────────────
+
+async function triggerWeeklyRun() {
+  const btn = document.getElementById('weekly-run-btn');
+  btn.disabled = true;
+  btn.textContent = 'Starting…';
+
+  try {
+    const before = new Date();
+    before.setSeconds(before.getSeconds() - 10);
+    _weeklyDispatchedAt = before.toISOString();
+
+    const model = document.getElementById('model-select').value;
+    const r = await ghFetch(`actions/workflows/${WEEKLY_WORKFLOW_FILE}/dispatches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main', inputs: { model } }),
+    });
+    if (r.status === 204) {
+      btn.textContent = 'Running…';
+      showColProgress('weekly');
+      document.getElementById('weekly-run-status').textContent = 'Queued…';
+      _weeklyPollTimer = setTimeout(pollWeeklyStatus, 8000);
+    } else {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body.message || `HTTP ${r.status}`);
+    }
+  } catch (e) {
+    toast(e.message, true);
+    btn.disabled = false;
+    btn.textContent = '▶ Generate';
+  }
+}
+
+async function pollWeeklyStatus() {
+  if (_weeklyPollStartedAt && Date.now() - _weeklyPollStartedAt > 45 * 60 * 1000) {
+    hideColProgress('weekly', 'Timed out');
+    return;
+  }
+  try {
+    const data = await ghGet(`actions/workflows/${WEEKLY_WORKFLOW_FILE}/runs?per_page=10`);
+    const run = data.workflow_runs?.find(r => r.created_at >= _weeklyDispatchedAt);
+
+    if (!run || run.status !== 'completed') {
+      await updateRunStatus('weekly', run);
+      _weeklyPollTimer = setTimeout(pollWeeklyStatus, 15000);
+      return;
+    }
+
+    if (run.conclusion === 'success') {
+      hideColProgress('weekly', 'Completed ✓');
+      toast('Round-up ready — refreshing list…');
+      await loadRoundups();
+    } else {
+      hideColProgress('weekly', `Finished (${run.conclusion})`);
+      toast(`Run ${run.conclusion} — check the Actions tab.`, true);
+    }
+  } catch {
+    _weeklyPollTimer = setTimeout(pollWeeklyStatus, 20000);
+  }
+}
+
+async function pollDailyStatus() {
+  if (_dailyPollStartedAt && Date.now() - _dailyPollStartedAt > 45 * 60 * 1000) {
+    hideColProgress('daily', 'Timed out');
+    return;
+  }
+  try {
+    const data = await ghGet(`actions/workflows/${DAILY_WORKFLOW_FILE}/runs?per_page=10`);
+    const run = data.workflow_runs?.find(r => r.created_at >= _dailyDispatchedAt);
+
+    if (!run || run.status !== 'completed') {
+      await updateRunStatus('daily', run);
+      _dailyPollTimer = setTimeout(pollDailyStatus, 15000);
+      return;
+    }
+
+    if (run.conclusion === 'success') {
+      hideColProgress('daily', 'Completed ✓');
+      toast('Briefing ready — refreshing list…');
+      await loadBriefings();
+    } else {
+      hideColProgress('daily', `Finished (${run.conclusion})`);
+      toast(`Run ${run.conclusion} — check the Actions tab.`, true);
+    }
+  } catch {
+    _dailyPollTimer = setTimeout(pollDailyStatus, 20000);
+  }
+}
+
+async function checkActiveRun() {
+  const checks = [
+    {
+      workflowFile: DAILY_WORKFLOW_FILE,
+      col: 'daily',
+      setDispatchedAt: value => { _dailyDispatchedAt = value; },
+      setTimer: value => { _dailyPollTimer = value; },
+      poll: pollDailyStatus,
+    },
+    {
+      workflowFile: WEEKLY_WORKFLOW_FILE,
+      col: 'weekly',
+      setDispatchedAt: value => { _weeklyDispatchedAt = value; },
+      setTimer: value => { _weeklyPollTimer = value; },
+      poll: pollWeeklyStatus,
+    },
+  ];
+
+  await Promise.all(checks.map(async ({ workflowFile, col, setDispatchedAt, setTimer, poll }) => {
+    try {
+      const data = await ghGet(`actions/workflows/${workflowFile}/runs?per_page=5`);
+      const run = data.workflow_runs?.[0];
+      if (!run || run.status === 'completed') return;
+
+      const before = new Date(run.created_at);
+      before.setSeconds(before.getSeconds() - 5);
+      setDispatchedAt(before.toISOString());
+      showColProgress(col);
+      await updateRunStatus(col, run);
+      setTimer(setTimeout(poll, 8000));
+    } catch {
+      // No access or no runs yet — leave this column idle
+    }
+  }));
+}
+
+// ── Sources ──────────────────────────────────────────────────────────────────
+
+async function loadSources() {
+  const socialEl = document.getElementById('social-sources-list');
+  const el       = document.getElementById('sources-list');
+  socialEl.innerHTML = '<div class="loading">Loading sources…</div>';
+  el.innerHTML       = '<div class="loading">Loading sources…</div>';
+
+  try {
+    const data   = await ghGet(`contents/${SOURCES_PATH}`);
+    const parsed = jsyaml.load(b64decode(data.content));
+    state.sources       = (parsed.rss_feeds || []).map(s => ({ ...s }));
+    state.socialSources = (parsed.social?.twitter_accounts || []).map(s => ({ ...s }));
+    state.sourcesRaw    = parsed;
+    state.sourcesSha    = data.sha;
+    renderSocialSources();
+    renderSources();
+  } catch (e) {
+    socialEl.innerHTML = `<div class="empty">Failed to load sources: ${esc(e.message)}</div>`;
+    el.innerHTML = '';
+  }
+}
+
+function renderSocialSources() {
+  const el = document.getElementById('social-sources-list');
+  const accounts = state.socialSources;
+
+  el.innerHTML = `
+    <div class="card-header">
+      <span>Social media</span>
+      <span class="count">${accounts.length} accounts</span>
+    </div>
+    ${accounts.length === 0 ? '<div class="empty">No social accounts configured.</div>' :
+      accounts.map(a => `
+        <div class="source-row">
+          <div class="source-info">
+            <div class="source-name">${esc(a.name)} <span style="color:var(--muted);font-weight:400">@${esc(a.handle)}</span></div>
+            <div class="source-url">${esc(a.relevance_hint || '')}</div>
+          </div>
+        </div>
+      `).join('')}
+  `;
+}
+
+function renderSources() {
+  const el = document.getElementById('sources-list');
+
+  el.innerHTML = `
+    <div class="card-header">
+      <span>Media & organisations</span>
+      <span class="count">${state.sources.length} sources</span>
+    </div>
+    ${state.sources.map(s => `
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">${esc(s.name)}</div>
+          <div class="source-url">${esc(s.url)}</div>
+        </div>
+        <button class="delete-btn" data-url="${esc(s.url)}" data-name="${esc(s.name)}" title="Remove source">&times;</button>
+      </div>
+    `).join('')}
+    <div class="add-source-panel">
+      <div class="label">Find &amp; add a source</div>
+      <div id="discovery-rows"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="add-row-btn" onclick="addDiscoveryRow()">+ Add row</button>
+        <button class="btn btn-primary" id="add-btn" onclick="addSource()">Find feed</button>
+      </div>
+      <p id="add-source-status" class="hint"></p>
+      <div>
+        <button class="direct-add-toggle" onclick="toggleDirectAdd()">Already have the RSS feed URL? Add directly.</button>
+        <div id="direct-add-panel" class="direct-add-panel" style="display:none">
+          <div id="direct-rows"></div>
+          <div class="row" style="margin-top:8px">
+            <button class="add-row-btn" onclick="addDirectRow()">+ Add row</button>
+            <button class="btn btn-primary" id="direct-add-btn" onclick="addSourcesDirect()">Add source</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  el.addEventListener('click', e => {
+    const btn = e.target.closest('.delete-btn');
+    if (btn) removeSource(btn.dataset.url, btn.dataset.name);
+  });
+
+  // Seed discovery with one empty row
+  addDiscoveryRow();
+}
+
+// ── Discovery rows ────────────────────────────────────────────────────────────
+
+function addDiscoveryRow() {
+  const container = document.getElementById('discovery-rows');
+  const div = document.createElement('div');
+  div.className = 'discovery-row direct-row row';
+  div.innerHTML = `
+    <input type="url" class="discovery-url" placeholder="Website URL — RSS feed will be found automatically" style="flex:1" />
+    <button class="remove-row-btn" onclick="removeDiscoveryRow(this)" title="Remove">&times;</button>
+  `;
+  div.querySelector('input').addEventListener('input', _syncDiscoveryRows);
+  container.appendChild(div);
+  _syncDiscoveryRows();
+}
+
+function removeDiscoveryRow(btn) {
+  btn.closest('.discovery-row').remove();
+  _syncDiscoveryRows();
+}
+
+function _syncDiscoveryRows() {
+  const rows = document.querySelectorAll('#discovery-rows .discovery-row');
+  rows.forEach(r => {
+    r.querySelector('.remove-row-btn').style.display = rows.length > 1 ? 'inline' : 'none';
+  });
+  const filled = [...rows].filter(r => r.querySelector('.discovery-url').value.trim()).length;
+  const btn = document.getElementById('add-btn');
+  if (btn) btn.textContent = filled > 1 ? `Find ${filled} feeds` : 'Find feed';
+}
+
+async function addSource() {
+  const urls = [...document.querySelectorAll('#discovery-rows .discovery-url')]
+    .map(i => i.value.trim()).filter(Boolean);
+  if (!urls.length) { toast('Enter at least one URL.', true); return; }
+
+  const btn = document.getElementById('add-btn');
+  const statusEl = document.getElementById('add-source-status');
+  btn.disabled = true;
+  btn.textContent = 'Searching…';
+  const label = urls.length === 1 ? 'an RSS feed' : `${urls.length} RSS feeds`;
+  statusEl.textContent = `Looking for ${label} — this takes about a minute…`;
+
+  try {
+    const before = new Date();
+    before.setSeconds(before.getSeconds() - 10);
+    _sourceDiscoveryDispatchedAt = before.toISOString();
+
+    const r = await ghFetch(`actions/workflows/${ADD_SOURCE_WORKFLOW_FILE}/dispatches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main', inputs: { website_url: urls.join(',') } }),
+    });
+    if (r.status !== 204) {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body.message || `HTTP ${r.status}`);
+    }
+
+    _sourceDiscoveryPollTimer = setTimeout(pollSourceDiscovery, 10000);
+  } catch (e) {
+    toast(`Failed to start: ${e.message}`, true);
+    btn.disabled = false;
+    _syncDiscoveryRows();
+    statusEl.textContent = '';
+  }
+}
+
+async function pollSourceDiscovery() {
+  try {
+    const data = await ghGet(`actions/workflows/${ADD_SOURCE_WORKFLOW_FILE}/runs?per_page=10`);
+    const run = data.workflow_runs?.find(r => r.created_at >= _sourceDiscoveryDispatchedAt);
+
+    if (!run || run.status !== 'completed') {
+      _sourceDiscoveryPollTimer = setTimeout(pollSourceDiscovery, 12000);
+      return;
+    }
+
+    const btn = document.getElementById('add-btn');
+    const statusEl = document.getElementById('add-source-status');
+    btn.disabled = false;
+    _sourceDiscoveryPollTimer = null;
+
+    if (run.conclusion === 'success') {
+      document.querySelectorAll('#discovery-rows .discovery-url').forEach(i => i.value = '');
+      _syncDiscoveryRows();
+      statusEl.textContent = 'Source(s) added — active on the next run.';
+      loadSources();
+    } else {
+      btn.textContent = 'Find feed';
+      statusEl.textContent = 'Could not find an RSS feed. Try a more specific URL, or check the Actions tab for details.';
+    }
+  } catch {
+    _sourceDiscoveryPollTimer = setTimeout(pollSourceDiscovery, 15000);
+  }
+}
+
+async function removeSource(url, name) {
+  if (!confirm(`Remove "${name}" from sources?`)) return;
+
+  try {
+    const fileData = await ghGet(`contents/${SOURCES_PATH}`);
+    const parsed   = jsyaml.load(b64decode(fileData.content));
+    const before   = (parsed.rss_feeds || []).length;
+    parsed.rss_feeds = (parsed.rss_feeds || []).filter(s => s.url !== url);
+
+    if (parsed.rss_feeds.length === before) {
+      toast('Source not found in config.', true);
+      return;
+    }
+
+    const r = await ghFetch(`contents/${SOURCES_PATH}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `sources: remove ${name}`,
+        content: b64encode(jsyaml.dump(parsed, { indent: 2, lineWidth: 120 })),
+        sha: fileData.sha,
+        branch: 'main',
+      }),
+    });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body.message || `HTTP ${r.status}`);
+    }
+
+    toast(`"${name}" removed.`);
+    loadSources();
+  } catch (e) {
+    toast(`Failed to remove: ${e.message}`, true);
+  }
+}
+
+function toggleDirectAdd() {
+  const panel = document.getElementById('direct-add-panel');
+  if (!panel) return;
+  const opening = panel.style.display === 'none';
+  panel.style.display = opening ? 'block' : 'none';
+  // Seed with one empty row the first time it opens
+  if (opening && document.getElementById('direct-rows').children.length === 0) {
+    addDirectRow();
+  }
+}
+
+function _makeDirectRow() {
+  const div = document.createElement('div');
+  div.className = 'direct-row row';
+  div.innerHTML = `
+    <input type="text" class="direct-name" placeholder="Source name" style="flex:1" />
+    <input type="url"  class="direct-rss"  placeholder="RSS feed URL"  style="flex:2" />
+    <button class="remove-row-btn" onclick="removeDirectRow(this)" title="Remove row">&times;</button>
+  `;
+  return div;
+}
+
+function _syncDirectRowButtons() {
+  const rows = document.querySelectorAll('#direct-rows .direct-row');
+  rows.forEach(r => {
+    r.querySelector('.remove-row-btn').style.display = rows.length > 1 ? 'inline' : 'none';
+  });
+  // Keep submit label in sync
+  const filled = [...rows].filter(r =>
+    r.querySelector('.direct-name').value.trim() &&
+    r.querySelector('.direct-rss').value.trim()
+  ).length;
+  const btn = document.getElementById('direct-add-btn');
+  if (btn) btn.textContent = filled > 1 ? `Add ${filled} sources` : 'Add source';
+}
+
+function addDirectRow() {
+  const container = document.getElementById('direct-rows');
+  const row = _makeDirectRow();
+  // Update button label when user types
+  row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', _syncDirectRowButtons));
+  container.appendChild(row);
+  _syncDirectRowButtons();
+  row.querySelector('.direct-name').focus();
+}
+
+function removeDirectRow(btn) {
+  btn.closest('.direct-row').remove();
+  _syncDirectRowButtons();
+}
+
+async function addSourcesDirect() {
+  const rows = document.querySelectorAll('#direct-rows .direct-row');
+  const entries = [...rows]
+    .map(r => ({
+      name: r.querySelector('.direct-name').value.trim(),
+      url:  r.querySelector('.direct-rss').value.trim(),
+    }))
+    .filter(e => e.name && e.url);
+
+  if (!entries.length) { toast('Fill in at least one name and RSS URL.', true); return; }
+
+  const btn = document.getElementById('direct-add-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const fileData = await ghGet(`contents/${SOURCES_PATH}`);
+    const parsed   = jsyaml.load(b64decode(fileData.content));
+    parsed.rss_feeds = [...(parsed.rss_feeds || []), ...entries];
+
+    const label = entries.length === 1 ? entries[0].name : `${entries.length} sources`;
+    const r = await ghFetch(`contents/${SOURCES_PATH}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `sources: add ${label}`,
+        content: b64encode(jsyaml.dump(parsed, { indent: 2, lineWidth: 120 })),
+        sha: fileData.sha,
+        branch: 'main',
+      }),
+    });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body.message || `HTTP ${r.status}`);
+    }
+
+    toast(entries.length === 1
+      ? `"${entries[0].name}" added — active on the next run.`
+      : `${entries.length} sources added — active on the next run.`);
+    loadSources();
+  } catch (e) {
+    toast(`Failed to add: ${e.message}`, true);
+    btn.disabled = false;
+    btn.textContent = entries.length > 1 ? `Add ${entries.length} sources` : 'Add source';
+  }
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+let _toastTimer;
+function toast(msg, isError = false) {
+  document.querySelector('.toast')?.remove();
+  const el = Object.assign(document.createElement('div'), { className: 'toast' + (isError ? ' error' : ''), textContent: msg });
+  document.body.appendChild(el);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.remove(), 3500);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+
+if (state.pat) {
+  showApp();
+} else {
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>

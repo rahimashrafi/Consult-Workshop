@@ -1,0 +1,43 @@
+name: Add source
+
+on:
+  workflow_dispatch:
+    inputs:
+      website_url:
+        description: 'Website or RSS feed URL(s) to add — separate multiple with commas'
+        required: true
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Discover and add RSS feed
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4-6' }}
+        run: python src/briefing/discover_source.py "${{ github.event.inputs.website_url }}"
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config/sources.yaml
+          git diff --staged --quiet || git commit -m "sources: add discovered feed from ${{ github.event.inputs.website_url }}"
+          git push

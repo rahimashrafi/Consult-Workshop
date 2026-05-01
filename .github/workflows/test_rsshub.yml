@@ -1,0 +1,65 @@
+name: Test RSSHub Connection
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install httpx feedparser
+
+      - name: Test RSSHub feeds
+        env:
+          RSSHUB_INSTANCE: ${{ secrets.RSSHUB_INSTANCE }}
+        run: |
+          python - <<'EOF'
+          import os, sys, httpx, feedparser
+
+          instance = os.environ.get("RSSHUB_INSTANCE", "").rstrip("/")
+          if not instance:
+              print("ERROR: RSSHUB_INSTANCE secret is not set.")
+              sys.exit(1)
+
+          print(f"RSSHub instance: {instance}")
+
+          # Test a handful of accounts spread across the list
+          TEST_HANDLES = ["ylecun", "AndrewYNg", "Vestager", "salar", "wellingmax"]
+          ok = 0
+          errors = []
+
+          for handle in TEST_HANDLES:
+              url = f"{instance}/twitter/user/{handle}"
+              try:
+                  r = httpx.get(url, timeout=20, follow_redirects=True,
+                                headers={"User-Agent": "ConsultBot/1.0"})
+                  r.raise_for_status()
+                  feed = feedparser.parse(r.text)
+                  entries = len(feed.entries)
+                  title = feed.feed.get("title", "—")
+                  print(f"  OK  @{handle}: {entries} entries  ({title})")
+                  ok += 1
+              except Exception as e:
+                  print(f"  FAIL @{handle}: {e}")
+                  errors.append(handle)
+
+          print(f"\nResult: {ok}/{len(TEST_HANDLES)} feeds reachable")
+          if errors:
+              print(f"Failed: {', '.join('@' + h for h in errors)}")
+              sys.exit(1)
+          else:
+              print("All test feeds OK.")
+          EOF

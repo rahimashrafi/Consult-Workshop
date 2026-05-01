@@ -1,0 +1,139 @@
+# =============================================================================
+# SOURCES — the news feeds your briefing reads every day.
+#
+# SECTIONS:
+#   rss_feeds           — core daily sources (fetched every run)
+#   social              — Twitter/X accounts via RSSHub (optional, see README)
+#   serendipity_sources — a pool randomly sampled each run (3 per day by default)
+#
+# HOW TO ADD A SOURCE:
+#   Option A (easiest): use the "Add source" workflow in the Actions tab.
+#     Paste any website URL — it auto-discovers the RSS feed and adds it here.
+#   Option B: add an entry manually below, following the format shown.
+#
+# FINDING RSS FEED URLS:
+#   Most news sites expose a feed at /feed, /rss, or /feed.xml
+#   Try:  https://www.theguardian.com/world/rss
+#         https://techcrunch.com/feed/
+#   Or use a feed finder: https://feedsearch.dev/
+#
+# EACH ENTRY NEEDS:
+#   name     : display name shown in the briefing and dashboard
+#   url      : full RSS/Atom feed URL
+#   category : free-form label for your own organisation (does not affect scoring)
+#   language : 'en' or 'nl' (for display only — does not filter articles)
+# =============================================================================
+
+rss_feeds:
+
+  # ── General AI / technology news ────────────────────────────────────────────
+
+  - name: MIT Technology Review
+    url: https://www.technologyreview.com/feed/
+    category: ai_research
+    language: en
+
+  - name: The Verge
+    url: https://www.theverge.com/rss/index.xml
+    category: tech_news
+    language: en
+
+  - name: Wired
+    url: https://www.wired.com/feed/rss
+    category: tech_news
+    language: en
+
+  # ── AI policy / governance ───────────────────────────────────────────────────
+
+  - name: OECD AI Policy Observatory
+    url: https://wp.oecd.ai/feed/
+    category: ai_policy
+    language: en
+
+  - name: Euractiv Technology
+    url: https://www.euractiv.com/sections/tech/feed
+    category: eu_policy
+    language: en
+
+  # ── AI newsletters ───────────────────────────────────────────────────────────
+
+  - name: Import AI (Jack Clark)
+    url: https://importai.substack.com/feed
+    category: ai_newsletter
+    language: en
+
+  # ── Add your own sources below ───────────────────────────────────────────────
+  # Replace or supplement the examples above with feeds relevant to YOUR topic.
+  #
+  # - name: Source Name
+  #   url: https://example.com/feed
+  #   category: your_category
+  #   language: en
+
+
+# =============================================================================
+# TWITTER / X SOCIAL MONITORING (optional — requires RSSHub)
+#
+# Twitter/X feeds require a self-hosted RSSHub instance with OAuth credentials.
+# See README.md § "Twitter/X social monitoring" for setup instructions.
+#
+# To enable:
+#   1. Set up RSSHub on Railway (see README).
+#   2. Add RSSHUB_INSTANCE as a GitHub secret pointing to your Railway URL.
+#   3. Uncomment the rsshub_instance line below and add account entries.
+# =============================================================================
+
+social:
+  # rsshub_instance: https://your-rsshub-url.railway.app
+  twitter_accounts: []
+  # Uncomment and edit to add accounts:
+  # twitter_accounts:
+  #   - handle: sama
+  #     name: Sam Altman
+  #     relevance_hint: AI industry, OpenAI, regulation views
+  #   - handle: ylecun
+  #     name: Yann LeCun
+  #     relevance_hint: AI research, open-source AI debates
+
+
+# =============================================================================
+# SERENDIPITY POOL
+#
+# These sources are NOT fetched every day. Each run randomly picks a small
+# number (default: 3, set via SERENDIPITY_N) from this pool.
+# Good candidates: think tanks, newsletters, academic feeds, niche outlets.
+# Start with a handful and add more as you discover relevant sources.
+# =============================================================================
+
+serendipity_sources:
+
+  - name: VentureBeat AI
+    url: https://venturebeat.com/category/ai/feed/
+    category: ai_industry
+    language: en
+
+  - name: Stanford HAI
+    url: https://hai.stanford.edu/news/rss.xml
+    category: ai_research
+    language: en
+
+  - name: AI Now Institute
+    url: https://ainowinstitute.org/feed
+    category: ai_policy
+    language: en
+
+  - name: Future of Life Institute
+    url: https://futureoflife.org/feed/
+    category: ai_policy
+    language: en
+
+  - name: Brookings — AI Research
+    url: https://www.brookings.edu/topic/artificial-intelligence/feed/
+    category: ai_policy
+    language: en
+
+  # ── Add your own serendipity sources below ───────────────────────────────────
+  # - name: Source Name
+  #   url: https://example.com/feed
+  #   category: your_category
+  #   language: en

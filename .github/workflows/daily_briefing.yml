@@ -1,0 +1,64 @@
+name: Daily Briefing
+
+on:
+  schedule:
+    # 06:00 UTC = 07:00 CET (winter) / 08:00 CEST (summer)
+    # To change the time, edit the cron expression. Use https://crontab.guru to build your own.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'OpenRouter model ID (leave blank to use repo default)'
+        required: false
+        default: ''
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run briefing
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ github.event.inputs.model || vars.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4.6' }}
+          RSSHUB_INSTANCE: ${{ secrets.RSSHUB_INSTANCE }}
+          OUTPUT_DIR: outputs
+          LOOKBACK_HOURS:   ${{ vars.LOOKBACK_HOURS   || '25' }}
+          SERENDIPITY_N:    ${{ vars.SERENDIPITY_N    || '3' }}
+          TIER1_THRESHOLD:  ${{ vars.TIER1_THRESHOLD  || '3' }}
+          MAX_ITERATIONS:   ${{ vars.MAX_ITERATIONS   || '3' }}
+          INCLUDE_TIER3:    ${{ vars.INCLUDE_TIER3    || 'false' }}
+        run: python -m src.briefing.run
+
+      - name: Commit briefing to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p briefings
+          cp outputs/briefing_*.md briefings/ 2>/dev/null || true
+          git add briefings/
+          git diff --staged --quiet || git commit -m "briefing: $(ls outputs/briefing_*.md | head -1 | xargs basename | sed 's/briefing_//;s/\.md//')"
+          git push
+
+      - name: Upload briefing as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: briefing-${{ github.run_id }}
+          path: outputs/briefing_*.md
+          retention-days: 90
