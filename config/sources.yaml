@@ -26,6 +26,8 @@
 
 rss_feeds:
 
+
+
   # ── General AI / technology news ────────────────────────────────────────────
 
   - name: MIT Technology Review
@@ -198,7 +200,51 @@ serendipity_sources:
     language: en
 
   # ── Add your own serendipity sources below ───────────────────────────────────
-  # - name: Source Name
-  #   url: https://example.com/feed
-  #   category: your_category
-  #   language: en
+rss_feeds:
+  - name: "CoinDesk"
+    url: "https://www.coindesk.com/arc/outboundfeeds/rss"
+    category: "Crypto"
+    language: "en"
+
+  - name: "CryptoPanic"
+    url: "https://cryptopanic.com/news/rss/"
+    category: "Crypto"
+    language: "en"
+
+  - name: "Cointelegraph"
+    url: "https://cointelegraph.com/rss"
+    category: "Crypto"
+    language: "en"
+
+  - name: "FXStreet News"
+    url: "https://www.fxstreet.com/rss/news"
+    category: "Forex"
+    language: "en"
+
+  - name: "Seeking Alpha Market Currents"
+    url: "https://seekingalpha.com/market_currents.xml"
+    category: "Macro"
+    language: "en"
+
+  - name: "DailyFX Market News"
+    url: "https://www.dailyfx.com/feeds/market-news"
+    category: "Forex"
+    language: "en"
+
+social:
+  twitter_accounts:
+    - handle: "WuBlockchain"
+      name: "Colin Wu"
+      relevance_hint: "Crypto breaking news, whale movements, exchange data, and Asian market insights"
+    
+    - handle: "glassnodealerts"
+      name: "Glassnode Alerts"
+      relevance_hint: "On-chain data, Bitcoin/Ethereum network metrics, and exchange inflows/outflows"
+    
+    - handle: "CryptoMichNL"
+      name: "Michaël van de Poppe"
+      relevance_hint: "Crypto technical analysis, swing trading setups, and market sentiment"
+    
+    - handle: "ForexLive"
+      name: "ForexLive"
+      relevance_hint: "Real-time Forex breaking news, central bank commentary, and economic data releases"
