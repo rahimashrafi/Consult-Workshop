@@ -1,115 +1,12 @@
-# =============================================================================
-# REPORT PROFILE — the "brain" of your briefing.
-#
-# The LLM reads this file to decide which articles are relevant to your topic.
-# Edit every section to describe what you are researching or tracking.
-#
-# After editing:
-#   1. Save and commit this file (click the pencil icon on GitHub, then "Commit").
-#   2. Trigger a new briefing from the Actions tab to see the results.
-# =============================================================================
+core_focus: |
+  Focus heavily on cryptocurrency, Forex, and macro-economic markets. Track high-impact volatility drivers, central bank interest rate decisions (especially the US Federal Reserve), regulatory changes, institutional capital flows, and major on-chain data anomalies. The main goal is to capture market-moving news and sentiment shifts that can be utilized for short-to-medium-term swing trading, scalping, and risk management, while strictly filtering out general retail noise, clickbait price predictions, and repetitive post-event summaries.
 
-report:
-  # The full title of your report or research area.
-  # Example: "AI Policy and the Startup Ecosystem in Europe"
-  title: "Your Report Title Here"
-
-  # English version of the title — shown in the briefing header and used in LLM prompts.
-  title_en: "Your Report Title in English"
-
-  # One line describing your analytical standpoint or angle.
-  # Example: "Public health policy (Netherlands and EU context)"
-  # Example: "Venture capital and startup ecosystem (Southeast Asia focus)"
-  perspective: "Your perspective or standpoint"
-
-  status: "in_progress"
-
-
-# What your report is fundamentally about.
-# Write 2–4 sentences. Be specific: name the geography, sector, and angle.
-# The LLM uses this as its primary lens for deciding relevance.
-#
-# Good example:
-#   "This report examines how the EU AI Act affects small and medium enterprises
-#   in the Netherlands, focusing on compliance costs and competitive effects
-#   relative to US and UK firms."
-#
-# Vague (avoid):
-#   "AI policy in Europe."
-core_focus: >
-  Describe your research focus here. What question are you trying to answer?
-  What geography, sector, or institution are you focused on?
-  What is your analytical perspective or goal?
-
-
-# Key themes — the more specific, the better.
-# Add or remove items. Aim for 6–12 themes.
-# The LLM uses these to identify which articles match your focus.
 themes:
-  - Your first key theme (be specific, e.g. "AI regulation enforcement in the EU")
-  - Your second key theme
-  - Your third key theme
-  - Your fourth key theme
-  - Your fifth key theme
-  # Add more as needed — one per line starting with "  - "
+  - Macro-economic Policy & Central Banks (Fed, ECB, inflation data, interest rates)
+  - Crypto Regulatory Frameworks & SEC Decisions
+  - Institutional Adoption (ETF inflows/outflows, corporate treasury buying)
+  - Crypto Volatility & Major On-chain Metrics (Large exchange inflows/outflows, whale movements, liquidations)
+  - Forex Market Liquidity & Geopolitical Risk Impacts (DXY, EUR/USD, safe-haven flows)
 
-
-# Key organisations, institutions, or people to track.
-# The LLM pays special attention to articles mentioning these actors.
-# Examples: "European Commission", "OECD", "a specific company or university"
-key_actors:
-  - Your first key organisation or actor
-  - Your second key organisation or actor
-  - Your third key organisation or actor
-  # Add more as needed
-
-
-# =============================================================================
-# RELEVANCE TIERS
-#
-# These definitions tell the LLM how to score each article (0–3).
-# Do NOT change the field names (tier_0, tier_1, etc.) or the YAML structure.
-# You SHOULD rewrite the descriptions to match your specific topic.
-#
-# Scoring goal: aim for roughly 3–8 Tier 1 and Tier 2 articles per day.
-#   Too many Tier 1?  → Tighten the Tier 1 description.
-#   Too few Tier 1?   → Broaden it, or lower TIER1_THRESHOLD (see README).
-# =============================================================================
-
-relevance_tiers:
-  tier_0:
-    label: "Exclude"
-    description: >
-      Content with no connection to your topic whatsoever. Use Tier 0 only
-      when you are confident an article has zero relevance: entertainment news,
-      sports, consumer product announcements with no policy or economic angle,
-      and items where the title and summary contain no extractable signal.
-      When uncertain between Tier 0 and Tier 3, always assign Tier 3.
-
-  tier_1:
-    label: "Perfectly relevant"
-    description: >
-      Assign Tier 1 when an article directly addresses your core focus.
-      Replace this text with your specific Tier 1 criteria.
-      Example: "Assign Tier 1 when the article directly concerns (a) EU AI Act
-      implementation with impact on Dutch firms; (b) Dutch AI startup funding
-      data; or (c) official publications from the Dutch government or European
-      Commission on AI and innovation policy."
-
-  tier_2:
-    label: "Relevant"
-    description: >
-      Assign Tier 2 when an article is relevant to your themes but lacks the
-      geographic or institutional specificity of Tier 1.
-      Replace this text with your specific Tier 2 criteria.
-      Example: "Assign Tier 2 for EU-level or peer-country AI policy coverage
-      without a specific Dutch angle, or for analysis from credible outlets on
-      AI regulation and economic impact more broadly."
-
-  tier_3:
-    label: "Low signal"
-    description: >
-      Assign Tier 3 to general coverage that touches your themes only
-      indirectly: broad technology news, background articles, and items that
-      might eventually matter but have no clear policy or economic angle today.
-      Tier 3 articles are hidden by default (set INCLUDE_TIER3=true to show).
+tier_1_description: |
+  An article or report is Tier 1 (Perfect Relevance) if it contains actionable, high-impact data or breaking news capable of causing immediate or significant structural market shifts. Examples include unexpected central bank rate changes, major regulatory crackdowns or approvals (like crypto ETFs), sudden massive whale liquidations, or institutional shifts affecting core liquidity. The content must provide deep insight, precise numbers, or structural news rather than generic market commentary.
